@@ -5,7 +5,7 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: smc_model.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: smc_model.c 620 2009-01-05 17:25:02Z mritchie $	 */
 
 //#include <malloc.h>
 #include <math.h>
@@ -1220,7 +1220,7 @@ void smc_calc_crown_width(
 /*                                  contain the coefficients for the            */
 /*                                  functional species code                     */
 /********************************************************************************/
-/*  Formula : CL =b0*H**b1 - exp( b2 + b3 d6/height)                            */ 
+/*  Formula : CL =b0*H**b1 *exp( b3 d6/height)                                  */ 
 /*  Source  : Ritchie May 2008                                                  */
 /*  Coeffs  : CR                                                                */
 /********************************************************************************/
@@ -1232,7 +1232,7 @@ void smc_calc_crown_ratio(
     double  *coeffs_ptr    )
 {
 
-    double b0, b1, b2, b3;
+    double b0, b1, b3;
     double ratio;
     double newCR;           
     double crown_length;
@@ -1256,11 +1256,10 @@ void smc_calc_crown_ratio(
 
     b0 = coeffs_ptr[0];
     b1 = coeffs_ptr[1];
-    b2 = coeffs_ptr[2];
     b3 = coeffs_ptr[3];
 
 
-    crown_length = b0*pow(total_height,b1) - exp(b2 + b3*ratio);
+    crown_length = b0*pow(total_height,b1) * exp(b3*ratio);
 
     if (total_height <= 1.0)
     {

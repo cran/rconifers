@@ -35,5 +35,5 @@
 "34" 33 "PRU2" 0 "Prunus species" 0 0 " " 0.002 0 0 0 0 0
 "35" 34 "UNKB" 17 "Unknown Brush" 0 0 " " 0.002 0 0 0 0 0
 "36" 35 "FORB" 18 "Forbs" 0 0 " " 0.002 0 0 0 0 0
-"37" 36 "GRAS" 17 "Unknown annual grasses" 0 0 " " 0.002 0 0 0 0 0
+"37" 36 "GRAS" 18 "Unknown annual grasses" 0 0 " " 0.002 0 0 0 0 0
 "38" 37 "NS" 16 "Non Stocked" 0 0 " " 0.002 0 0 0 0 0

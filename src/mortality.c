@@ -22,10 +22,10 @@
 /*  MOD001  Jan11,2000  MWR     added manage xo function                        */
 /********************************************************************************/
 
-/* 	$Id: mortality.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: mortality.c 616 2008-12-30 17:51:32Z mritchie $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: mortality.c 610 2008-11-25 23:03:59Z hamannj $"; */
+/* static char vcid[] = "$Id: mortality.c 616 2008-12-30 17:51:32Z mritchie $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -40,11 +40,11 @@
 #include "conifers.h"
 
 /* these are here for temporary debugging */
-#include <R.h>
-#include <Rdefines.h>
-#include <Rinternals.h>
-#include <Rmath.h>
-#include <R_ext/Rdynload.h>
+//#include <R.h>
+//#include <Rdefines.h>
+//#include <Rinternals.h>
+//#include <Rmath.h>
+//#include <R_ext/Rdynload.h>
 
 
 /********************************************************************************/
@@ -232,7 +232,7 @@ void calc_hann_wang_x0(
    {
       *return_code = CONIFERS_MORT_ERROR; 
       *x0 = 0.0;
-      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
+//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 	
@@ -268,7 +268,7 @@ void calc_hann_wang_x0(
       if(*x0 > 0.0)
       {
 	 *return_code = CONIFERS_MORT_ERROR;
-	 Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
+//	 Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
 	 return;
       }
       ratio = log(CRITICAL_RD) / log( sdi / sdimx );
@@ -321,7 +321,7 @@ void calc_init_x0(
    if( bhtpa <= 0.0 || sdi <= 0.0)
    {
       *x0 = 0.0;	
-      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
+//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 
@@ -330,7 +330,7 @@ void calc_init_x0(
    {
       *return_code = CONIFERS_MORT_ERROR; 
       *x0 = 0.0;
-      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
+//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 

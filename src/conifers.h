@@ -111,7 +111,7 @@ extern "C" {
 #define SHRUB_CONTROL_ACTIVITY      2
 
 /* added for conifers 3.0   */
-#define CONIFER			0
+#define CONIFER			        0
 #define HARDWOOD                1
 #define SHRUB                   2
 #define FORB                    3

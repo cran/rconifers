@@ -1,9 +1,37 @@
 
-/* 	$Id: rconifers.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: rconifers.c 612 2008-11-25 23:13:17Z hamannj $	 */
 
-/* To submit to CRAN, simply upload to: */
-/* ftp://cran.r-project.org/incoming  */
-/* here is the command set */
+/* To submit to CRAN: */
+/* $ ch to conifers directory */
+/* $ R CMD CHECK rconifers */
+/* $ R CMD BUILD rconifers */
+/* $ ftp cran.r-project.org */
+/* Connected to cran.wu-wien.ac.at. */
+/* 220 Welcome to the CRAN FTP service. */
+/* Name (cran.r-project.org:hamannj): anonymous */
+/* 331 Please specify the password. */
+/* Password:  */
+/* 230-Welcome, CRAN useR! */
+/* 230- */
+/* 230-If you have any unusual problems, */
+/* 230-please report them via e-mail to <cran-sysadmin@statmath.wu-wien.ac.at>. */
+/* 230- */
+/* 230 Login successful. */
+/* Remote system type is UNIX. */
+/* Using binary mode to transfer files. */
+/* ftp> cd incoming */
+/* 250 Directory successfully changed. */
+/* ftp> put rconifers_0.0-9.tar.gz  */
+/* local: rconifers_0.0-9.tar.gz remote: rconifers_0.0-9.tar.gz */
+/* 229 Entering Extended Passive Mode (|||58381|) */
+/* 150 Ok to send data. */
+/* 100% |**************************************************************************************************************| 99741     146.79 MB/s    00:00 ETA */
+/* 226 File receive OK. */
+/* 99741 bytes sent in 00:04 (24.20 KB/s) */
+/* ftp> quit */
+/* 221 Goodbye. */
+/* $  */
+
 
 
 /* and send email to cran@r-project.org.  */

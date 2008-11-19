@@ -36,10 +36,10 @@
 /*                                                                              */
 /*------------------------------------------------------------------------------*/
 
-/* 	$Id: swo_model.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: swo_model.c 620 2009-01-05 17:25:02Z mritchie $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: swo_model.c 610 2008-11-25 23:03:59Z hamannj $"; */
+/* static char vcid[] = "$Id: swo_model.c 620 2009-01-05 17:25:02Z mritchie $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -257,7 +257,7 @@ void calc_crown_ratio(
     double  *coeffs_ptr    )
 {
 
-    double b0, b1, b2, b3;
+    double b0, b1, b3;
     double ratio;
     double newCR;           
     double crown_length;
@@ -282,17 +282,9 @@ void calc_crown_ratio(
 
     b0 = coeffs_ptr[0];
     b1 = coeffs_ptr[1];
-    b2 = coeffs_ptr[2];
     b3 = coeffs_ptr[3];
 
-    if(b2 == 0.0)
-    {
-        crown_length = b0*pow(total_height,b1);
-    }
-    else
-    {
-        crown_length = b0*pow(total_height,b1) - exp(b2 + b3*ratio);
-    }
+        crown_length = b0*pow(total_height,b1) * exp(b3*ratio);
     
     if (total_height <= 1.0)
     {
@@ -1643,6 +1635,12 @@ void calc_height_growth(
 
 		*height_growth= b0/total_height 
                   + exp(b1 + b2*(log(total_height)) + b3*total_height*basal_d + b4*cat*cat);
+
+        /****for unknown brush species set growth to zero *****/
+        if (b1 == 0 && b2 == 0 && b3 == 0 && b4 == 0)
+        {
+            *height_growth=0.0;
+        }
     }
 	else
 	{

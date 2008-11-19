@@ -22,10 +22,10 @@
 /****************************************************************************/
 
 
-/* 	$Id: sample.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: sample.c 619 2009-01-05 16:26:58Z hamannj $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: sample.c 610 2008-11-25 23:03:59Z hamannj $"; */
+/* static char vcid[] = "$Id: sample.c 619 2009-01-05 16:26:58Z hamannj $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -329,7 +329,7 @@ float uniform_0_1()
     float i1;
 
 //    i1 =  (float)rand() / (float)(RAND_MAX + 1.0);
-    i1 =  (double)rand() / (double)(RAND_MAX + 1.0);
+    i1 =  (float)( (double)rand() / (double)(RAND_MAX + 1.0) );
 
     return i1;
 }
