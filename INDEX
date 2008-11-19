@@ -1,0 +1,18 @@
+calc.max.sdi           Calculates the maximum stand density index
+plants                  Simple plant data set for CONIFERS growth model
+plots                   Simple plots data set for CONIFERS growth model
+project                 Projects a sample.data object using the
+                        CONIFERS forest growth model
+sample.data             CONIFERS sample data
+set.species.map         Set and update the species mapping table for
+                        the CONIFERS simulator
+set.variant             Set the CONIFERS growth model variant
+sp.sums                 Species summaries CONIFERS sample.data object
+swo 			Southwest Oregon variant species table data
+smc 			Stand Management Cooperative (SMC) variant
+thin                    Thin sample stand to user-defined settings.
+			species table data
+summary.sample.data	Prints a set of sp.sums for each species in
+			the sample.data$plants data.frame
+
+	

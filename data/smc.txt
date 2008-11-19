@@ -1,0 +1,4 @@
+"idx" "code" "fsp" "name" "organon" "cactos" "fvs" "endemic.mort" "max.sdi" "browse.damage" "mechanical.damage" "genetic.worth.h" "genetic.worth.d"
+"1" 0 "CV" 0 "Competing Vegetation" 0 0 " " 0.002 0 0 0 0 0
+"2" 1 "DF" 1 "Douglas fir" 202 4 "DF" 0.002 450 0 0 0 0
+"3" 2 "NS" 2 "Non Stocked" 0 0 " " 0 0 0 0 0 0
