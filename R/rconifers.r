@@ -1,5 +1,5 @@
 ###
-###	$Id: rconifers.r 613 2008-11-25 23:14:14Z hamannj $	
+###	$Id: rconifers.r 659 2009-12-16 17:57:26Z hamannj $	
 ###
 ###            R interface package for conifers growth model
 ###
@@ -23,8 +23,9 @@
 
 
 ## To submit to CRAN:
-## $ ch to conifers directory
+## $ cd to conifers directory
 ## $ R CMD CHECK rconifers
+## if check doesn't pass with flying colors, fix the errors and warnings until it does
 ## $ R CMD BUILD rconifers
 ## $ ftp cran.r-project.org
 ## Connected to cran.wu-wien.ac.at.
@@ -52,6 +53,15 @@
 ## ftp> quit
 ## 221 Goodbye.
 ## $
+## send this email
+#CRAN Team, 
+#
+#We have updated the rconifers young forest simulator package (i.e. rconifers_version_number.tar.gz). 
+#
+#Thanks,
+#Jeff.
+
+## to cran@r-project.org.
 
 
 
@@ -77,6 +87,9 @@
   introtxt <-
     paste("\n`rconfiers' is a package that provides an alternative interface\n",
           "to the CONIFERS forest growth model.\n\n",
+          "For more information about the CONIFERS forest growth model,\n",
+          "paste this url into your web browser:\n",
+          "http://www.fs.fed.us/psw/programs/ecology_of_western_forests/projects/conifers/\n\n",
           "The user is able to define arbitrary silvicultural prescriptions,\n",
           "using standard R scripts, to predict near term (<20 years) future\n",
           "forest conditions under a variety of model configurations and\n",
@@ -93,7 +106,7 @@
   }
   
   if( .Call( "r_set_variant", 0, PACKAGE="rconifers" ) ) {
-    stop("Package could not be loaded. Could not load default coefficients. Stopping...")
+    stop("Rconifers Error: Package could not be loaded. Could not load default coefficients. Stopping...")
   }
   
   ## set the species mappings
@@ -109,7 +122,7 @@
                  gwd=swo$genetic.worth.d)
 
   if( !.Call( "r_set_species_map", sp.map, verbose=FALSE,PACKAGE="rconifers" ) ) {
-    stop("Package could not be loaded. Could not load swo species map. Stopping...")
+    stop("Rconifers Error: Package could not be loaded. Could not load swo species map. Stopping...")
   } else {
     introtxt <- paste("\nInitialized species map using data(swo)\nType help.start() for documentation\n", sep = "")
     if(interactive() || getOption("verbose")) {
@@ -121,10 +134,28 @@
 
 }
 
+## doesn't appear to be getting called in "R CMD check" 
+## .Last.lib <- function( lib ) {
+##   .Call( "exit_conifers", PACKAGE="rconifers" )
+##   library.dynam.unload( "rconifers" )  
+## }
+
 .Last.lib <- function( lib ) {
-  .Call( "exit_conifers", PACKAGE="rconifers" )
-  library.unload( "rconifers" )  
+ .Call( "exit_conifers", PACKAGE="rconifers" )
+ library.dynam.unload( "rconifers" , lib)  
 }
+
+
+## > detach("package:rconifers", unload = TRUE)
+## freeing the species array
+## freeing the coefficients array
+## Error in .Last.lib(libpath) : could not find function "library.unload"
+## Warning message:
+## rconifers namespace cannot be unloaded
+## package 'rconifers' does not have a name space 
+## > 
+
+
 
 rand.seed <- function( control ) {
   val <- .Call( "r_reseed", control, PACKAGE="rconifers" )
@@ -133,14 +164,41 @@ rand.seed <- function( control ) {
 
 
 ## this function will set the species codes (internal)
-set.species.map <- function( sp.map=list(idx,fsp,code,em,msdi,b,m,gwh,gwd) ) {
-  
-  ## verify the lengths match
-  if( length( sp.map$idx ) != length( sp.map$fsp ) ) {
-    stop( "The lengths of the index and functional species vectors do not match." )
+set.species.map <- function( variant ) {
+
+## default is variant 0, SWO
+    data(swo)
+    sp.map <- list(idx=swo$idx,
+                 fsp=swo$fsp,
+                 code=as.character(swo$code),
+                 em=swo$endemic.mort,
+                 msdi=swo$max.sdi,
+                 b=swo$browse.damage,
+                 m=swo$mechanical.damage,
+                 gwh=swo$genetic.worth.h,
+                 gwd=swo$genetic.worth.d)
+  if (!variant==1 && !variant==0){
+    stop( "Rconifers Error: Variant number invalid, default SWO map set." )
     return
   }
+## otherwise, variant 1, SMC
+  if(variant == 1){
+    data(smc)
+    sp.map <- list(idx=smc$idx,
+                 fsp=smc$fsp,
+                 code=as.character(smc$code),
+                 em=smc$endemic.mort,
+                 msdi=smc$max.sdi,
+                 b=smc$browse.damage,
+                 m=smc$mechanical.damage,
+                 gwh=smc$genetic.worth.h,
+                 gwd=smc$genetic.worth.d)}
 
+  ## verify the lengths match
+  if( length( sp.map$idx ) != length( sp.map$fsp ) ) {
+    stop( "Rconifers Error: The lengths of the index and functional species vectors do not match." )
+    return
+  }
   val <- .Call( "r_set_species_map", sp.map, verbose=FALSE, PACKAGE="rconifers" )
   ## no need to return the number of species assigned
 }
@@ -160,7 +218,8 @@ build.sample.data <- function( x ) {
                                   slope=x[[3]][[3]],
                                   aspect=x[[3]][[4]],
                                   whc=x[[3]][[5]],
-                                  map=x[[3]][[6]]
+                                  map=x[[3]][[6]],
+                                  si30=x[[3]][[7]]
                                   )
                            )
   plants <-   as.data.frame( cbind( plot=x[[4]][[1]] ,
@@ -175,7 +234,8 @@ build.sample.data <- function( x ) {
                                    errors=x[[4]][[10]]
                                    )
                             )
-
+#inserted the following line on 12/11/2009 to try and fix plot assignment
+  plants$plot<- as.numeric( levels( plants$plot) )[plants$plot]
   plants$d6 <- as.numeric( levels( plants$d6 ) )[plants$d6]
   plants$dbh <- as.numeric( levels( plants$dbh ) )[plants$dbh]
   plants$tht <- as.numeric( levels( plants$tht ) )[plants$tht]
@@ -205,7 +265,7 @@ project <- function( x,
 {
 
   if( class( x ) != "sample.data" ) {
-    stop( "x is not a sample.data object." )
+    stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
   
@@ -226,22 +286,22 @@ thin <- function( x,
 {
 
   if( class( x ) != "sample.data" ) {
-    stop( "x is not a sample.data object." )
+    stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
 
   if( control$type < 1 || control$type > 4 ) {
-    stop( "control$type must be 1, 2, 3, or 4. See help." )
+    stop( "Rconifers Error: control$type must be 1, 2, 3, or 4. See help." )
     return    
   }
   
   if( control$type %in% c(2,3) & !is.null( control$target.sp ) ) {
-    stop( "If you want to thin all species, sp=NULL." )
+    stop( "Rconifers Error: If you want to thin all species, sp=NULL." )
     return    
   }
 
   if( control$type %in% c(1,4) & is.null( control$target.sp ) ) {
-    stop( "If you want to thin a particular species, sp != NULL." )
+    stop( "Rconifers Error: If you want to thin a particular species, sp != NULL." )
     return    
   }
 
@@ -259,7 +319,7 @@ impute <- function( x,
 {
   
   if( class( x ) != "sample.data" ) {
-    stop( "x is not a sample.data object." )
+    stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
   
@@ -275,12 +335,13 @@ impute <- function( x,
 
 calc.max.sdi <- function( x )
 {
+  
   if( class( x ) != "sample.data" ) {
-    stop( "x is not a sample.data object." )
+    stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
   
-  x$plants$sp.code <- as.character( plants$sp.code )
+  x$plants$sp.code <- as.character( x$plants$sp.code )
   val <- .Call( "r_calc_max_sdi", x, PACKAGE="rconifers" )
   
   val
@@ -290,6 +351,11 @@ calc.max.sdi <- function( x )
 ################################################################################
 ## print a few results of the whole system
 print.sample.data <- function( x, digits = max( 3, getOption("digits") - 1 ),... ) {
+
+    if( class( x ) != "sample.data" ) {
+    stop( "Rconifers Error: x is not a sample.data object." )
+    return
+  }
 
   save.digits <- unlist(options(digits=digits))
   on.exit(options(digits=save.digits))
@@ -336,7 +402,7 @@ summary.sample.data <- function(object,...) {
 sp.sums <- function( x ) {
 
   if( class( x ) != "sample.data" ) {
-    stop( "x is not a sample.data object." )
+    stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
 
@@ -347,7 +413,8 @@ sp.sums <- function( x ) {
     expf <- sum( x$expf * x$n.stems ) / npts
     tht <- sum( x$expf * x$n.stems * x$tht ) / sum( x$expf * x$n.stems )
     ba <- sum( x$expf * x$n.stems * x$dbh^2*0.0054541539 ) / npts
-    qmd <- sqrt( ba / expf / 0.0054541359 )
+    expgtbh<-sum(x$n.stems[x$tht>4.5]*x$expf[x$tht>4.5])/npts
+    qmd <- sqrt( ba / expgtbh / 0.0054541359 )
     sp.sums <- c(qmd,tht,ba,expf)
   }
   
@@ -357,6 +424,6 @@ sp.sums <- function( x ) {
   df
 }
 
-  
+
 
 

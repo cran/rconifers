@@ -1,6 +1,6 @@
 Package: rconifers
-Version: 0.0-10
-Date: 2008/11/19
+Version: 1.0.0
+Date: 2009/12/16
 Title: R interface to the CONIFERS forest growth model
 Author: Jeff D. Hamann <jeff.hamann@forestinformatics.com> and Martin
         W. Ritchie <mrtichie@fs.fed.us>
@@ -12,6 +12,6 @@ License: GPL (>= 2)
 URL: http://www.r-project.org,
         http://www.fs.fed.us/psw/programs/ecology_of_western_forests/projects/conifers/,
         http://www.forestinformatics.com
-Packaged: Thu Apr 9 10:02:10 2009; Jeff D. Hamann
+Packaged: 2009-12-18 17:51:33 UTC; hamannj
 Repository: CRAN
-Date/Publication: 2009-04-14 17:33:11
+Date/Publication: 2009-12-20 09:35:13

@@ -54,20 +54,9 @@ Ritchie, M.W. 2008 . User's Guide and Help System for CONIFERS: A Simulator for 
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
 
-\seealso{    \code{\link{calc.max.sdi}},
-	     \code{\link{impute}},
-	     \code{\link{plants}},	
-	     \code{\link{plots}} 
-	     \code{\link{project}},
-	     \code{\link{rand.seed}},
-	     \code{\link{rconifers}},
-	     \code{\link{sample.data}},	     		  
-	     \code{\link{set.species.map}},		  
-	     \code{\link{set.variant}},		  
- 	     \code{\link{smc}}, 
- 	     \code{\link{summary.sample.data}},
-	     \code{\link{swo}}, 
-	     \code{\link{thin}}
+\seealso{\code{\link{impute}},
+	     \code{\link{sample.data}},
+	     \code{\link{set.species.map}}
 }
 
 
@@ -79,6 +68,10 @@ rand.seed( control=list(use.random.error=0 ) )
 
 # reset the random error component and set the seed to 4326
 rand.seed( control=list(use.random.error=1,random.seed=4326 ) )
+
+# reset the random error component and set the seed to a random number between 0 and 10000
+germ<-sample(1:9999,1)
+rand.seed( control=list(use.random.error=1, random.seed=germ) )
 
 }
 

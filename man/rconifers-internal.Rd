@@ -48,14 +48,13 @@ Ritchie, M.W. 2008 . User's Guide and Help System for CONIFERS: A Simulator for 
 
 \seealso{    \code{\link{calc.max.sdi}},
 	     \code{\link{impute}},
-	     \code{\link{plants}},	
-	     \code{\link{plots}} 
 	     \code{\link{project}},
 	     \code{\link{set.species.map}},		  
  	     \code{\link{smc}}, 
  	     \code{\link{sp.sums}}, 	     
  	     \code{\link{summary.sample.data}},
 	     \code{\link{swo}}, 
+	     \code{\link{smc}},
 	     \code{\link{thin}}
 }
 

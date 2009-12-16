@@ -2,14 +2,16 @@
 %%	$Id $	
 
 \keyword{datasets}
-\name{plants}
-\alias{plants}
+\name{plants.smc}
+\alias{plants.smc}
 \non_function{}
-\title{Simple plant data set for the CONIFERS growth model}
-\usage{data(plants)}
+\title{Simple plant data set for the SMC variant of the CONIFERS growth model.}
+\usage{data(plants.smc)}
 
 \description{
-This a simple plants \code{\link{data.frame}} that contains basic plant attributes used in the CONIFERS growth model.
+This a simple plants \code{\link{data.frame}} that contains basic
+plant attributes used in the SMC variant of the CONIFERS growth
+model. It contains the same columns as the \code{\link{plants.swo}} data.frame.
 
 The \code{plants} \code{\link{data.frame}} has 60 rows and 9 columns.
 }
@@ -19,7 +21,8 @@ The \code{plants} \code{\link{data.frame}} has 60 rows and 9 columns.
   
   \describe{
     \item{plot}{The plot identifier.}
-    \item{sp.code}{species code (See \code{\link{swo}} or \code{\link{smc}})}
+    \item{sp.code}{Species code (See \code{\link{swo}} or
+    \code{\link{smc}} for species maps)}
     \item{d6}{Diameter at 6 inches above soil interface.}
     \item{dbh}{Diameter at breast height, in inches.}
     \item{tht}{Total height of the stem, in feet.}
@@ -31,12 +34,13 @@ The \code{plants} \code{\link{data.frame}} has 60 rows and 9 columns.
   }
 }
 
-\details{ The example data represents a field sample that can be used
-to generate future forest conditions using the CONIFERS forest growth
-model. The data are in imperial units. The required values are the
-\code{plot}, \code{sp.code}, and \code{d6} measurements. Values that
-have not been observed, or are missing, are denoted with an \code{NA}
-and can be imputed using the \code{\link{impute}} function.}
+\details{The example data represents a field sample that can be used
+to generate future forest conditions using the SMC variant of the
+CONIFERS forest growth model. The data are in imperial units. The
+required values are the \code{plot}, \code{sp.code}, and \code{d6}
+measurements. Values that have not been observed, or are missing, are
+denoted with an \code{NA} and can be imputed using the
+\code{\link{impute}} function.}
 
 \references{
 
@@ -50,24 +54,17 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 
 \seealso{    \code{\link{calc.max.sdi}},
 	     \code{\link{impute}},
-	     \code{\link{plants}},	
-	     \code{\link{plots}} 
-	     \code{\link{project}},
-	     \code{\link{rand.seed}},
-	     \code{\link{rconifers}},
-	     \code{\link{sample.data}},	     		  
-	     \code{\link{set.species.map}},		  
-	     \code{\link{set.variant}},		  
- 	     \code{\link{smc}}, 
- 	     \code{\link{summary.sample.data}},
-	     \code{\link{swo}}, 
-	     \code{\link{thin}}
+	     \code{\link{plants.swo}},
+	     \code{\link{plots.swo}}
+	     \code{\link{plants.smc}},
+ 	     \code{\link{smc}},
+	     \code{\link{swo}}
 }
 
 \examples{
 library( rconifers )
-data(plants)
-print( plants )
+data(plants.smc)
+print( plants.smc )
 }
 
 \keyword{datasets}

@@ -5,7 +5,7 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: grow.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: grow.c 644 2009-11-24 02:12:55Z hamannj $	 */
 
 #include <math.h>
 #include <memory.h>
@@ -919,23 +919,25 @@ static void smc_project_plant(
                 return;
             }
         }
+
+	/* plot_ptr->site_30 == 0.0, this will still grow! */
         smc_calc_dbh_growth(return_code,
-		                    plant_ptr->tht,
-		                    h40,
-		                    plot_ptr->site_30,
-		                    plant_ptr->dbh,
-		                    basal_area,
-		                    tpa_con_stand,
-
-							species_ptr[plant_ptr->sp_idx].genetic_worth_h,
-							species_ptr[plant_ptr->sp_idx].genetic_worth_d,
-
-							genetics_age_cut,
+			    plant_ptr->tht,
+			    h40,
+			    plot_ptr->site_30,
+			    plant_ptr->dbh,
+			    basal_area,
+			    tpa_con_stand,
+			    
+			    species_ptr[plant_ptr->sp_idx].genetic_worth_h,
+			    species_ptr[plant_ptr->sp_idx].genetic_worth_d,
+			    
+			    genetics_age_cut,
                             use_genetic_gains,
-		                    &plant_ptr->dbh_growth,
-		                    c_ptr->dbh_growth,
+			    &plant_ptr->dbh_growth,
+			    c_ptr->dbh_growth,
                             c_ptr->type);
-      
+	
 	      
         if( *return_code != CONIFERS_SUCCESS )
         {

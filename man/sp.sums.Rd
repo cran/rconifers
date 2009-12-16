@@ -47,115 +47,114 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
 \seealso{    \code{\link{calc.max.sdi}},
-	     \code{\link{impute}},
-	     \code{\link{plants}},	
-	     \code{\link{plots}} 
-	     \code{\link{project}},
-	     \code{\link{rand.seed}},
-	     \code{\link{rconifers}},
-	     \code{\link{sample.data}},	     		  
+	     \code{\link{sample.data}},
 	     \code{\link{set.species.map}},		  
 	     \code{\link{set.variant}},		  
  	     \code{\link{smc}}, 
  	     \code{\link{summary.sample.data}},
-	     \code{\link{swo}}, 
-	     \code{\link{thin}}
+	     \code{\link{swo}}
 }
 
 \examples{
 library( rconifers )
 
-## set the variant to the SWO variant
-set.variant( 0 )
-
-# load the Southwest-Oregon species coefficients into R as a data.frame object
-data( swo )
-
-# set the species map 
-sp.map <- list(idx=swo$idx,
-                 fsp=swo$fsp,
-                 code=as.character(swo$code),
-                 em=swo$endemic.mort,
-		 msdi=swo$max.sdi,
-                 b=swo$browse.damage,
-                 m=swo$mechanical.damage,
-                 gwh=swo$genetic.worth.h,
-                 gwd=swo$genetic.worth.d)
-set.species.map( sp.map )
+#Example 1 Using SMC
+## set the variant to the SMC variant
+set.species.map(set.variant( 1 ))
 
 ## grow the data that was originally swo in the smc variant
 # load and display CONIFERS example plots
-data( plots )
-print( plots )
+data( plots.smc )
+print( plots.smc )
 
 # load and display CONIFERS example plants
-data( plants )
-print( plants )
-
-# randomly remove 10 crown.width observations to test
-# the impute function
-blanks <- sample( 1:nrow( plants ), 10, replace=FALSE )
-plants[blanks,]$crown.width <- NA
+data( plants.smc )
+print( plants.smc )
 
 # create the sample.data list object
-sample.3 <- list( plots=plots, plants=plants, age=3, x0=0.0 )
-class(sample.3)  <- "sample.data"
+sample.smc.3 <- list( plots=plots.smc, plants=plants.smc, age=3, x0=0.0 )
+class(sample.smc.3)  <- "sample.data"
 
-# fill in missing values
-sample.3.imp <- impute( sample.3 )
+print( sp.sums( sample.smc.3 ) )
+smry<-sp.sums( sample.smc.3 )
+dfqmd<-smry["DF","qmd"]
+
+#Example 2 Using SWO
+## set the variant to the SWO variant
+set.species.map(set.variant( 0 ) )
+
+## grow the swo data
+# load and display CONIFERS example plots
+data( plots.swo )
+print( plots.swo )
+
+# load and display CONIFERS example plants
+data( plants.swo )
+print( plants.swo )
+
+# create the sample.data list object
+sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0 )
+class(sample.swo.3)  <- "sample.data"
 
 # print the maximum stand density index for the current settings
-print( calc.max.sdi( sample.3.imp ) )
+print( calc.max.sdi( sample.swo.3 ) )
 
 # print a summary of the sample
-print( sample.3.imp )
+print( sample.swo.3 )
 
 # now, project the sample forward for 20 years
 # with all of the options turned off
-sample.23 <- project( sample.3.imp, 
+sample.swo.23 <- project( sample.swo.3,
 	  20, 
 	  control=list(rand.err=0,rand.seed=0,endemic.mort=0,sdi.mort=0))
 
 ## print the projected summaries
-print( sample.23 )
+print( sample.swo.23 )
 
-## plot the diagnostics from the fit a linear dbh-tht model 
-## before thinning
-opar <- par( mfcol=c(2,2 ) )
-plot( lm( sample.23$plants$tht ~ sample.23$plants$dbh ) )
-par( opar )
-
-## thin the stand to capture mortality, redistribute growth, 
-## and possibly generate revenue
+## thin the stand
 ## Proportional thin for selected tree species, does not remove shrubs
-sample.23.t1 <- thin( sample.23, 
+sample.swo.23.t1 <- thin( sample.swo.23,
 	     control=list(type=1, target=50.0, target.sp="DF" ) )
-print( sample.23.t1 )
+print( sample.swo.23.t1 )
 
 ## Proportional thin across all tree species
-sample.23.t2 <- thin( sample.23, 
+sample.swo.23.t2 <- thin( sample.swo.23,
 	     control=list(type=2, target=50.0 ) )
-print( sample.23.t2 )
+print( sample.swo.23.t2 )
 
 ## Thin from below, by dbh, all species
-sample.23.t3 <- thin( sample.23, 
+sample.swo.23.t3 <- thin( sample.swo.23,
 	     control=list(type=3, target=50.0 ) )
-print( sample.23.t3 )
+print( sample.swo.23.t3 )
 
 ## Thin from below, by dbh for species "PM"
-sample.23.t4 <- thin( sample.23, 
+sample.swo.23.t4 <- thin( sample.swo.23,
 	     control=list(type=4, target=50.0, target.sp="PM" ) )
-print( sample.23.t4 )
-
-## plot the diagnostics from the fit a linear dbh-tht model
-## after proportional thinning
-opar <- par( mfcol=c(2,2 ) )
-plot( lm( sample.23.t2$plants$tht ~ sample.23.t2$plants$dbh ) )
-par( opar )
+print( sample.swo.23.t4 )
 
 ## print the differences, by species
-print( sp.sums( sample.23.t4 ) - sp.sums( sample.23 ) )
+print( sp.sums( sample.swo.23.t4 ) - sp.sums( sample.swo.23 ) )
+
+## generate a plot of the species summaries
+opar <- par(mfrow=c(2,2))
+
+##hist( sample.swo.23$plants$dbh, xlim=c(0,50), ylim=c(0,50), main="Diameter Distribution" )
+##hist( sample.swo.23$plants$tht, xlim=c(0,100), ylim=c(0,110), main="Height Distribution" )
+
+hist( sample.swo.23$plants$dbh, main="Diameter Distribution" )
+hist( sample.swo.23$plants$tht, main="Height Distribution" )
+
+ba <- sp.sums(sample.swo.23)$ba
+names(ba) <- rownames( sp.sums(sample.swo.23) )
+pie( ba[ba>0], main="Basal Area" )
+plot( sample.swo.23$plants$tht ~ sample.swo.23$plants$dbh, ylim=c(0,220), xlim=c(0,40), main="Height vs. Basal Diameter" )
+
+par(opar)
+
 
 }
 
 \keyword{models}
+
+
+

@@ -1,5 +1,5 @@
 
-/* 	$Id: rconifers.c 612 2008-11-25 23:13:17Z hamannj $	 */
+/* 	$Id: rconifers.c 645 2009-11-24 02:31:37Z hamannj $	 */
 
 /* To submit to CRAN: */
 /* $ ch to conifers directory */
@@ -180,9 +180,9 @@ SEXP r_set_variant( SEXP variant_sexp )
       /* the coefficients section */
       if( COEFFS_PTR )
       {
-	 free( COEFFS_PTR );
-	 COEFFS_PTR = NULL;
-	 N_COEFFS = 0;
+	    free( COEFFS_PTR );
+	    COEFFS_PTR = NULL;
+	    N_COEFFS = 0;
       }   
       
       /* load the coeffs for the variant */
@@ -217,7 +217,9 @@ SEXP r_set_variant( SEXP variant_sexp )
 
    /* you should perform a check to make sure that all the	*/
    /* species have a functional species in the coeffs array	*/
-   INTEGER(ans)[0] = 0;
+
+   /* return the current_variant */
+   INTEGER(ans)[0] = current_variant;
    UNPROTECT(1);
    return ans;
 
@@ -391,10 +393,6 @@ SEXP getvar(SEXP name, SEXP rho)
 }
 
 
-/********************************************************************************/
-/* new interface that all the APIs will use -- NO MORE SAMPLE RECORD!!!		*/
-/* except the last one couldn't handle the updatable variables			*/
-/********************************************************************************/
 SEXP r_project_sample( 
    SEXP data_sexp,
    SEXP n_years_sexp,
@@ -411,10 +409,10 @@ SEXP r_project_sample(
    unsigned long use_precip_in_hg = 0;
 
    unsigned long n_plots;
-   struct PLOT_RECORD *plots_ptr;
+   struct PLOT_RECORD *plots_ptr = NULL;
 
    unsigned long n_plants;
-   struct PLANT_RECORD *plants_ptr;
+   struct PLANT_RECORD *plants_ptr = NULL;
 
    long nyrs = asInteger(n_years_sexp);
    unsigned long hcb_growth_on = 1;
@@ -438,8 +436,6 @@ SEXP r_project_sample(
    
    /* all bet this damn variable is causing the troubles!!!! */
    /* this is now going into the data list object */
-   //x0  = asReal( get_list_element( ctl_sexp, "x0" ) );
-   //use_precip_in_hg  = asInteger( get_list_element( ctl, "use.precip.in.hg" ) );
    x0 = asReal( get_list_element( data_sexp, "x0" ) );
    age = asInteger( get_list_element( data_sexp, "age" ) );
 
@@ -448,36 +444,62 @@ SEXP r_project_sample(
       x0 = 0.0;
    }
 
-
 /*    Rprintf( "value of x0 = %lf\n", x0 ); */
 /*    Rprintf( "value of age = %ld\n", age ); */
 
 /*    Rprintf( "build_plot_array_from_sexp..." ); */
-   plots_ptr = build_plot_array_from_sexp( 
-      get_list_element( data_sexp, "plots" ), &n_plots );
-/*    Rprintf( "n_plots = %ld\n", n_plots ); */
+      plots_ptr = build_plot_array_from_sexp( 
+	 get_list_element( data_sexp, "plots" ), &n_plots );
+/*       Rprintf( "n_plots = %ld\n", n_plots ); */
 /*    Rprintf( "done\n" ); */
    
 /*    Rprintf( "build_plant_array_from_sexp..." ); */
-   plants_ptr = build_plant_array_from_sexp( 
+      plants_ptr = build_plant_array_from_sexp( 
       get_list_element( data_sexp, "plants" ), &n_plants );
 /*    Rprintf( "n_plants = %ld\n", n_plants ); */
 /*    Rprintf( "done\n" ); */
    
-   /* you should fill in the missing values here */
+      /* a check to ensure the site index values for the plots are non-zero */
+      if( current_variant == CONIFERS_SMC )
+      {
+	 for( i = 0; i < n_plots; i++ )
+	 {
+	    if( plots_ptr[i].site_30 <= 0.0 )
+	    {
+
+	       Rprintf( "Invalid plots for variant %ld. Check site index values\n", current_variant );
+	       ret_val = build_return_data_sexp( x0,
+						 age,
+						 n_plots, plots_ptr, 
+						 n_plants, plants_ptr  );  
+	       
+	       free( plots_ptr );
+	       free( plants_ptr );
+	       
+	       /* unprotect the return value (list) */
+	       UNPROTECT( 1 );
+	       return ret_val;	   
+	       
+	    }
+	 }
+      }
+      
+
+   /* project the sample.data for 1 year, nyrs times */
    for( i = 0; i < nyrs; i++ )
    {
         if(hcb_growth_on)
         {
-	   hcb_growth_on = FALSE;  /*  turn off hcb growth  */
+	      hcb_growth_on = FALSE;  /*  turn off hcb growth  */
         }
         else
         {
-	   hcb_growth_on = TRUE;   /*  turn on hcb growth  */
+	      hcb_growth_on = TRUE;   /*  turn on hcb growth  */
         }
 
 	return_code = CONIFERS_SUCCESS;
 	
+
 /*  	Rprintf( "age = %d, value of x0 = %lf, before\n", age, x0 ); */
 	project_plant_list( &return_code,
 
@@ -503,10 +525,23 @@ SEXP r_project_sample(
 
 /* 	Rprintf( "age = %d, value of x0 = %lf, after\n", age, x0 ); */
 
+	/* if the project didn't work, you must print an error message and return the unprojected data */
 	if( return_code != CONIFERS_SUCCESS )
 	{
-	   Rprintf( "unable to project, return_code = %ld, %lf\n", return_code, x0 );
+	   Rprintf( "unable to project, return_code = %ld, %lf, check conifers.h for list of return codes\n", return_code, x0 );
+	   ret_val = build_return_data_sexp( x0,
+					     age,
+					     n_plots, plots_ptr, 
+					     n_plants, plants_ptr  );  
+	  
+	   free( plots_ptr );
+	   free( plants_ptr );
+	   
+	   /* unprotect the return value (list) */
+	   UNPROTECT( 1 );
+	   return ret_val;	   
 	}
+	
 
 	age++;
    }
@@ -576,23 +611,26 @@ struct PLOT_RECORD *build_plot_array_from_sexp( SEXP plot_sexp,
    SEXP plot_slp_sexp; 
    SEXP plot_asp_sexp; 
    SEXP plot_h20_sexp; 
-   SEXP plot_map_sexp; 
+   SEXP plot_map_sexp;
+   SEXP plot_si30_sexp; //site index
 
    PROTECT( plot_sexp = AS_LIST( plot_sexp ) );
 
    plot_plot_sexp = get_list_element( plot_sexp, "plot" );
    plot_elev_sexp = get_list_element( plot_sexp, "elevation" );
-   plot_slp_sexp = get_list_element( plot_sexp, "slope" );
-   plot_asp_sexp = get_list_element( plot_sexp, "aspect" );
-   plot_h20_sexp = get_list_element( plot_sexp, "whc" );
-   plot_map_sexp = get_list_element( plot_sexp, "map" );
+   plot_slp_sexp  = get_list_element( plot_sexp, "slope" );
+   plot_asp_sexp  = get_list_element( plot_sexp, "aspect" );
+   plot_h20_sexp  = get_list_element( plot_sexp, "whc" );
+   plot_map_sexp  = get_list_element( plot_sexp, "map" );
+   plot_si30_sexp = get_list_element( plot_sexp, "si30"); //site index
 
    PROTECT( plot_plot_sexp = coerceVector( plot_plot_sexp, INTSXP ) );
    PROTECT( plot_elev_sexp = coerceVector( plot_elev_sexp, REALSXP ) );
-   PROTECT( plot_slp_sexp = coerceVector( plot_slp_sexp, REALSXP ) );
-   PROTECT( plot_asp_sexp = coerceVector( plot_asp_sexp, REALSXP ) );
-   PROTECT( plot_h20_sexp = coerceVector( plot_h20_sexp, REALSXP ) );
-   PROTECT( plot_map_sexp = coerceVector( plot_map_sexp, REALSXP ) );
+   PROTECT( plot_slp_sexp  = coerceVector( plot_slp_sexp, REALSXP ) );
+   PROTECT( plot_asp_sexp  = coerceVector( plot_asp_sexp, REALSXP ) );
+   PROTECT( plot_h20_sexp  = coerceVector( plot_h20_sexp, REALSXP ) );
+   PROTECT( plot_map_sexp  = coerceVector( plot_map_sexp, REALSXP ) );
+   PROTECT( plot_si30_sexp = coerceVector( plot_si30_sexp, REALSXP ) ); //site index
 
    /* build the plots vector */
    *n_plots = length( plot_plot_sexp );
@@ -610,6 +648,24 @@ struct PLOT_RECORD *build_plot_array_from_sexp( SEXP plot_sexp,
       plots_ptr[i].aspect = REAL( plot_asp_sexp )[i];
       plots_ptr[i].water_capacity = REAL( plot_h20_sexp )[i];
       plots_ptr[i].mean_annual_precip = REAL( plot_map_sexp )[i];
+      plots_ptr[i].site_30 = REAL( plot_si30_sexp )[i];  //site index
+
+      /* should this be a check on the minimim site index value */
+      /* only applies for CONIFERS_SMC */
+      if( current_variant == CONIFERS_SMC )
+      {
+	 if( ISNA( REAL( plot_si30_sexp )[i] ) ||
+	     ISNAN( REAL( plot_si30_sexp )[i] )  ||
+	     plots_ptr[i].site_30 <= 0.0 )
+	 {
+	    Rprintf(
+	       "Invalid si30 for plot %ld, setting value to %lf\n",
+	       plots_ptr[i].plot,
+	       plots_ptr[i].site_30 );
+	    
+	    plots_ptr[i].site_30 = 0.0;
+	 }	 
+      }
 
 /*       Rprintf( */
 /* 	 "%ld %lf %lf %lf %lf %lf\n", */
@@ -622,7 +678,8 @@ struct PLOT_RECORD *build_plot_array_from_sexp( SEXP plot_sexp,
 
    }
 
-   UNPROTECT( 7 );   /* plot lists */
+   /* this needs to match the number of PROTECT statements in the function */
+   UNPROTECT( 8 );
    
    return plots_ptr;
 }
@@ -641,16 +698,18 @@ SEXP build_sexp_from_plot_array( unsigned long n_plots,
    SEXP ret_plots_asp;
    SEXP ret_plots_h20;
    SEXP ret_plots_map;
+   SEXP ret_plots_si30;  //site index
 
-   PROTECT( ret_val = allocVector( VECSXP, 6 ) );
+   PROTECT( ret_val = allocVector( VECSXP, 7 ) );
 
    /* plots */
-   PROTECT( ret_plots_id = allocVector( INTSXP, n_plots ) );
-   PROTECT( ret_plots_elev = allocVector( REALSXP, n_plots ) );
+   PROTECT( ret_plots_id    = allocVector( INTSXP, n_plots ) );
+   PROTECT( ret_plots_elev  = allocVector( REALSXP, n_plots ) );
    PROTECT( ret_plots_slope = allocVector( REALSXP, n_plots ) );
-   PROTECT( ret_plots_asp = allocVector( REALSXP, n_plots ) );
-   PROTECT( ret_plots_h20 = allocVector( REALSXP, n_plots ) );
-   PROTECT( ret_plots_map = allocVector( REALSXP, n_plots ) );
+   PROTECT( ret_plots_asp   = allocVector( REALSXP, n_plots ) );
+   PROTECT( ret_plots_h20   = allocVector( REALSXP, n_plots ) );
+   PROTECT( ret_plots_map   = allocVector( REALSXP, n_plots ) );
+   PROTECT( ret_plots_si30  = allocVector( REALSXP, n_plots ) );  //site index
 
    for( i = 0; i < n_plots; i++ )
    {
@@ -660,6 +719,7 @@ SEXP build_sexp_from_plot_array( unsigned long n_plots,
       REAL(ret_plots_asp)[i] = plots_ptr[i].aspect;
       REAL(ret_plots_h20)[i] = plots_ptr[i].water_capacity;
       REAL(ret_plots_map)[i] = plots_ptr[i].mean_annual_precip;
+      REAL(ret_plots_si30)[i] = plots_ptr[i].site_30; //site index
    }
 
    SET_VECTOR_ELT( ret_val, 0, ret_plots_id );
@@ -668,9 +728,10 @@ SEXP build_sexp_from_plot_array( unsigned long n_plots,
    SET_VECTOR_ELT( ret_val, 3, ret_plots_asp );
    SET_VECTOR_ELT( ret_val, 4, ret_plots_h20 );
    SET_VECTOR_ELT( ret_val, 5, ret_plots_map );
+   SET_VECTOR_ELT( ret_val, 6, ret_plots_si30  );
 
    /* unprotect the vectros from the plots */
-   UNPROTECT( 6 );
+   UNPROTECT( 7 );
 
    return ret_val;
 }
@@ -781,7 +842,7 @@ struct PLANT_RECORD *build_plant_array_from_sexp( SEXP plant_sexp,
       plants_ptr[i].d6_area = plants_ptr[i].d6*plants_ptr[i].d6*FC_I;
       plants_ptr[i].basal_area = plants_ptr[i].dbh*plants_ptr[i].dbh*FC_I;
       plants_ptr[i].crown_area = plants_ptr[i].crown_width * 
-	 plants_ptr[i].crown_width * MY_PI / 4.0;
+	  plants_ptr[i].crown_width * MY_PI / 4.0;
 
       /* perform some basic error checking here */
       /* see if you can use the ISNAN macro here */
@@ -790,35 +851,35 @@ struct PLANT_RECORD *build_plant_array_from_sexp( SEXP plant_sexp,
 	  ISNAN( REAL( plant_d6_sexp )[i] )  ||
 	  plants_ptr[i].d6 < 0.0 )
       {
-	 plants_ptr[i].d6 = 0.0;
+	    plants_ptr[i].d6 = 0.0;
       }
 
       if( ISNA( REAL( plant_dbh_sexp )[i] ) ||
 	  ISNAN( REAL( plant_dbh_sexp )[i] )  ||
 	  plants_ptr[i].dbh < 0.0 )
       {
-	 plants_ptr[i].dbh = 0.0;
+	    plants_ptr[i].dbh = 0.0;
       }
 
       if( ISNAN( REAL( plant_tht_sexp )[i] )  || plants_ptr[i].expf < 0.0 )
       {
-	 plants_ptr[i].tht = 0.0;
+	    plants_ptr[i].tht = 0.0;
       }
 
       if( ISNAN( REAL( plant_cr_sexp )[i] )  || plants_ptr[i].cr < 0.0 )
       {
-	 plants_ptr[i].cr = 0.0;
+	    plants_ptr[i].cr = 0.0;
       }
 
       if( ISNAN( REAL( plant_expf_sexp )[i] )  || plants_ptr[i].expf < 0.0 )
       {
-	 plants_ptr[i].expf = 0.0;
+	    plants_ptr[i].expf = 0.0;
       }
 
       if( ISNAN( REAL( plant_crown_width_sexp )[i] )  || plants_ptr[i].crown_width < 0.0 )
       {
-	 plants_ptr[i].crown_width = 0.0;
-	 plants_ptr[i].crown_area = 0.0;
+	    plants_ptr[i].crown_width = 0.0;
+	    plants_ptr[i].crown_area = 0.0;
       }
 
 /*       if( ISNAN( REAL( plant_crown_area_sexp )[i] )  || plants_ptr[i].crown_area < 0.0 ) */
@@ -961,6 +1022,7 @@ SEXP r_thin_sample(
    age = asInteger( get_list_element( data_sexp, "age" ) );
    plots_ptr = build_plot_array_from_sexp( 
       get_list_element( data_sexp, "plots" ), &n_plots );
+
    plants_ptr = build_plant_array_from_sexp( 
       get_list_element( data_sexp, "plants" ), &n_plants );
 
@@ -1108,7 +1170,7 @@ SEXP r_fill_in_missing_values(
    double fixed_plot_radius;
    double min_dbh;
    double baf;
-   unsigned long model_variant;
+//   unsigned long model_variant;
 
    SEXP ret_val;   
 
@@ -1116,16 +1178,37 @@ SEXP r_fill_in_missing_values(
    fixed_plot_radius  = asReal( get_list_element( ctl_sexp, "fpr" ) ); 
    min_dbh  = asReal( get_list_element( ctl_sexp, "min.dbh" ) ); 
    baf  = asReal( get_list_element( ctl_sexp, "baf" ) ); 
-   model_variant = asInteger( get_list_element( ctl_sexp, "model.variant" ) ); 
+
+//   model_variant = asInteger( get_list_element( ctl_sexp, "model.variant" ) ); 
 
 /* set the data variables */
    x0 = asReal( get_list_element( data_sexp, "x0" ) );
    age = asInteger( get_list_element( data_sexp, "age" ) );
+
    plots_ptr = build_plot_array_from_sexp( 
       get_list_element( data_sexp, "plots" ), &n_plots );
+
    plants_ptr = build_plant_array_from_sexp( 
       get_list_element( data_sexp, "plants" ), &n_plants );
    
+
+/*    /\* perform a general check for valid pointers *\/ */
+/*    if( plots_ptr == NULL || plants_ptr == NULL ) */
+/*    { */
+
+/*       if( plots_ptr == NULL ) */
+/*       { */
+/* 	 Rprintf( "unable to impute values. plots may have missing values for variant\n" ); */
+/*       } */
+      
+/*       //UNPROTECT( 1 ); */
+/*       //return data_sexp; */
+/*       return R_NilValue; */
+
+/*    } */
+
+
+   /* if you have everything, then fill in the missing values */
    fill_in_missing_values( &return_code,
 			   
 			   N_SPECIES,
@@ -1133,7 +1216,8 @@ SEXP r_fill_in_missing_values(
 			   N_COEFFS,
 			   COEFFS_PTR,
 			   
-			   model_variant, 
+			   //model_variant, 
+			   current_variant,
 			   
 			   n_plants,
 			   plants_ptr,

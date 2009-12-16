@@ -5,7 +5,7 @@
 /*                                                                          */
 /****************************************************************************/
                                                                                 
-/* 	$Id: conifers.h 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: conifers.h 630 2009-09-03 19:30:22Z mritchie $	 */
 
 #ifndef __CONIFERS_H__
 #define __CONIFERS_H__
@@ -48,8 +48,8 @@ extern "C" {
 #define CRITICAL_RD 0.600               /*  threshold imminent sdi mort NEVER==1  */   
 #define CCF_CONST_I 0.00180302608677    /*  PI / 4.0 / 43560.0 * 100.0            */   
 #define SQ_FT_PER_ACRE      43560.0     /*  Square feet per acre                  */   
-#define CURRENT_COEFFS_VER  4.00        /*  current version num for coeffs        */
-#define MODEL_VERSION       4.10        /* model (equations) version              */
+#define CURRENT_COEFFS_VER  4.12        /*  current version num for coeffs        */
+#define MODEL_VERSION       4.12        /* model (equations) version              */
 
 /* error constants          */
 #define CONIFERS_SUCCESS        0       
@@ -111,7 +111,7 @@ extern "C" {
 #define SHRUB_CONTROL_ACTIVITY      2
 
 /* added for conifers 3.0   */
-#define CONIFER			        0
+#define CONIFER			0
 #define HARDWOOD                1
 #define SHRUB                   2
 #define FORB                    3
