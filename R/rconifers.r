@@ -1,5 +1,5 @@
 ###
-###	$Id: rconifers.r 659 2009-12-16 17:57:26Z hamannj $	
+###	$Id: rconifers.r 660 2009-12-18 17:57:24Z hamannj $	
 ###
 ###            R interface package for conifers growth model
 ###
@@ -63,7 +63,8 @@
 
 ## to cran@r-project.org.
 
-
+## to do this all at once,
+## $ ftp
 
 .First.lib <-
   function(lib, pkg)
@@ -407,6 +408,11 @@ sp.sums <- function( x ) {
   }
 
   x.by.sp <- split( x$plants, f=list(x$plants$sp.code ) )
+
+  ## where does npts come from???
+  ## this might be a bug.
+  ##npts <- x#npts
+  npts <- length( unique( x$plots$plot ) )
   
   ## this function computes the summaries each species.
   sp.sums.f <- function( x, npts ) {
