@@ -22,8 +22,11 @@ impute( x, control=list(fpr=11.78, min.dbh=5.6, baf=40.0) )
 
 \details{The impute function returns a list object of class
   \code{\link{sample.data}} that contains all the required data
-  elements needed to call most CONIFERS functions. The control
-  argument needs to contain at least the following elements:
+  elements needed to call most CONIFERS functions. The inbound data
+  frame objects for the plants and plots associated with the
+  \code{\link{sample.data}} object must contain all the fields
+  described in the \code{\link{plants.swo}}. The control argument
+  needs to contain at least the following elements:
 
 \describe{
   \item{fpr}{is the radius, in feet, for a fixed area plot which is used to

@@ -1,5 +1,5 @@
 ###
-###	$Id: rconifers.r 660 2009-12-18 17:57:24Z hamannj $	
+###	$Id: rconifers.r 663 2010-07-30 17:53:10Z hamannj $	
 ###
 ###            R interface package for conifers growth model
 ###
@@ -32,7 +32,7 @@
 ## 220 Welcome to the CRAN FTP service.
 ## Name (cran.r-project.org:hamannj): anonymous
 ## 331 Please specify the password.
-## Password:
+## Password: [hit return - no password needed]
 ## 230-Welcome, CRAN useR!
 ## 230-
 ## 230-If you have any unusual problems,
@@ -270,6 +270,18 @@ project <- function( x,
     return
   }
   
+  if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+    {
+    stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+    return
+  }
+
+  if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+    {
+      stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+      return
+    }
+
   x$plants$sp.code <- as.character( x$plants$sp.code )
   val <- build.sample.data( .Call( "r_project_sample",  x, years, control, PACKAGE="rconifers" ) )
   val
@@ -323,7 +335,19 @@ impute <- function( x,
     stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
-  
+
+  if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+    {
+    stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+    return
+  }
+
+  if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+    {
+      stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+      return
+    }
+     
   x$plants$sp.code <- as.character( x$plants$sp.code )
   val <- build.sample.data( .Call( "r_fill_in_missing_values",
                                   x,
@@ -341,7 +365,19 @@ calc.max.sdi <- function( x )
     stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
-  
+
+    if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+    {
+    stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+    return
+  }
+
+  if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+    {
+      stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+      return
+    }
+
   x$plants$sp.code <- as.character( x$plants$sp.code )
   val <- .Call( "r_calc_max_sdi", x, PACKAGE="rconifers" )
   
@@ -357,6 +393,18 @@ print.sample.data <- function( x, digits = max( 3, getOption("digits") - 1 ),...
     stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
+
+      if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+    {
+    stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+    return
+  }
+
+  if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+    {
+      stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+      return
+    }
 
   save.digits <- unlist(options(digits=digits))
   on.exit(options(digits=save.digits))
@@ -407,11 +455,24 @@ sp.sums <- function( x ) {
     return
   }
 
+    if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+    {
+    stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+    return
+  }
+
+  if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+    {
+      stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+      return
+    }
+
   x.by.sp <- split( x$plants, f=list(x$plants$sp.code ) )
 
   ## where does npts come from???
   ## this might be a bug.
   ##npts <- x#npts
+  ## didn't pass check. fixed.
   npts <- length( unique( x$plots$plot ) )
   
   ## this function computes the summaries each species.
