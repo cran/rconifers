@@ -65,8 +65,11 @@ Washington. 91p.
 library( rconifers )
 
 ## set the variant to the SWO variant
+## and calls species.map( swo )
 set.variant( 0 )
+
 ## set the variant to the SMC variant
+## and calls species.map( smc )
 set.variant( 1 )
 
 }

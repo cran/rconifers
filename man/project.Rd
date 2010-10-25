@@ -14,7 +14,8 @@
 project( x,years=1,control=list(rand.err=0,
                         rand.seed=0,
                         endemic.mort=0,
-                        sdi.mort=0) )
+                        sdi.mort=0,
+			genetic.gains=0) )
 }
 		   
 \arguments{
@@ -62,6 +63,12 @@ project( x,years=1,control=list(rand.err=0,
     mortality will be applied to the sample.data for each growth
     cycle. This operation is applied independently of the endemic
     mortality.}    
+
+  \item{genetic.gains}{Non-negative integer. If 0, genetic gains will not be applied to 
+    sample.data. If 1, genetic.gains will be applied to the sample.data for each growth
+    cycle. This operation is applied independently of the other control variables. 
+    This option only applies to Douglas-fir species in the SMC variant. }    
+
  }
 
 }
@@ -111,10 +118,11 @@ Washington. 91p.
 }
 
 \examples{
+
 library( rconifers )
 
 ## set the variant to the SWO variant and set species map
-set.species.map( set.variant(0) )
+set.variant( 0 )
 
 ## grow the data SWO variant test data
 # load and display CONIFERS example plots
@@ -132,7 +140,8 @@ class(sample.swo.3)  <- "sample.data"
 # now, project the sample forward for 20 years
 # with all of the options turned off
 sample.swo.23 <- project( sample.swo.3, 20,
-	  control=list(rand.err=0,rand.seed=0,endemic.mort=1,sdi.mort=1))
+	  control=list(rand.err=0,rand.seed=0,endemic.mort=0,sdi.mort=0))
+print( sample.swo.23 )
 
 ## print the projected summaries
 print( sample.swo.23 )
@@ -153,6 +162,47 @@ summi<-sp.sums(sample.swo.23wr)
 dfba[i]<-summi["DF","ba"]
 }
 summary(dfba)
+
+
+
+################################################################################
+## now, reset the variant to SMC and grow with genetic gains option
+set.variant(1)
+
+## grow the data SMC variant test data
+# load and display CONIFERS example plots
+data( plots.smc )
+print( plots.smc )
+
+# load and display CONIFERS example plants
+data( plants.smc )
+print( plants.smc )
+
+# create the sample.data list object
+sample.smc.3 <- list( plots=plots.smc, plants=plants.smc, age=3, x0=0.0 )
+class(sample.smc.3)  <- "sample.data"
+
+# now, project the sample forward for 20 years
+# with all of the options turned off
+sample.smc.23.0 <- project( sample.smc.3, 20,
+	  control=list(rand.err=0,rand.seed=0,endemic.mort=0,sdi.mort=0,genetic.gains=0))
+print( sample.smc.23.0 )
+
+
+## now, project the sample forward for 20 years
+## with all of the options turned off
+## except for the genetic gains
+data( smc )
+smc[smc$code == 'DF',]$genetic.worth.d <- 20
+smc[smc$code == 'DF',]$genetic.worth.h <- 20
+set.species.map( smc )
+
+## project with genetic gains turned on.
+sample.smc.23.1 <- project( sample.smc.3, 20,
+	  control=list(rand.err=0,rand.seed=0,endemic.mort=0,sdi.mort=0,genetic.gains=1))
+print( sample.smc.23.1 )
+
+##get the differences for the species
 
 
 }

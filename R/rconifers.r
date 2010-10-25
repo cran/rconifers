@@ -1,5 +1,5 @@
 ###
-###	$Id: rconifers.r 663 2010-07-30 17:53:10Z hamannj $	
+###	$Id: rconifers.r 669 2010-10-25 19:53:44Z hamannj $	
 ###
 ###            R interface package for conifers growth model
 ###
@@ -24,9 +24,9 @@
 
 ## To submit to CRAN:
 ## $ cd to conifers directory
-## $ R CMD CHECK rconifers
+## $ R CMD check rconifers
 ## if check doesn't pass with flying colors, fix the errors and warnings until it does
-## $ R CMD BUILD rconifers
+## $ R CMD build rconifers
 ## $ ftp cran.r-project.org
 ## Connected to cran.wu-wien.ac.at.
 ## 220 Welcome to the CRAN FTP service.
@@ -165,44 +165,75 @@ rand.seed <- function( control ) {
 
 
 ## this function will set the species codes (internal)
-set.species.map <- function( variant ) {
+## set.species.map <- function( variant ) {
 
-## default is variant 0, SWO
-    data(swo)
-    sp.map <- list(idx=swo$idx,
-                 fsp=swo$fsp,
-                 code=as.character(swo$code),
-                 em=swo$endemic.mort,
-                 msdi=swo$max.sdi,
-                 b=swo$browse.damage,
-                 m=swo$mechanical.damage,
-                 gwh=swo$genetic.worth.h,
-                 gwd=swo$genetic.worth.d)
-  if (!variant==1 && !variant==0){
-    stop( "Rconifers Error: Variant number invalid, default SWO map set." )
+## ## default is variant 0, SWO
+##     data(swo)
+##     sp.map <- list(idx=swo$idx,
+##                  fsp=swo$fsp,
+##                  code=as.character(swo$code),
+##                  em=swo$endemic.mort,
+##                  msdi=swo$max.sdi,
+##                  b=swo$browse.damage,
+##                  m=swo$mechanical.damage,
+##                  gwh=swo$genetic.worth.h,
+##                  gwd=swo$genetic.worth.d)
+##   if (!variant==1 && !variant==0){
+##     stop( "Rconifers Error: Variant number invalid, default SWO map set." )
+##     return
+##   }
+
+##     ## otherwise, variant 1, SMC
+##   if(variant == 1){
+##     data(smc)
+##     sp.map <- list(idx=smc$idx,
+##                  fsp=smc$fsp,
+##                  code=as.character(smc$code),
+##                  em=smc$endemic.mort,
+##                  msdi=smc$max.sdi,
+##                  b=smc$browse.damage,
+##                  m=smc$mechanical.damage,
+##                  gwh=smc$genetic.worth.h,
+##                  gwd=smc$genetic.worth.d)}
+
+##   ## verify the lengths match
+##   if( length( sp.map$idx ) != length( sp.map$fsp ) ) {
+##     stop( "Rconifers Error: The lengths of the index and functional species vectors do not match." )
+##     return
+##   }
+##   val <- .Call( "r_set_species_map", sp.map, verbose=FALSE, PACKAGE="rconifers" )
+##   ## no need to return the number of species assigned
+## }
+
+## this function will set the species codes (internal)
+## sp.map is a list?
+set.species.map <- function( x, verbose=FALSE ) {
+
+  if( class( x ) != "data.frame" ) {
+    stop( "Rconifers Error: x is not a data.frame object." )
     return
   }
-## otherwise, variant 1, SMC
-  if(variant == 1){
-    data(smc)
-    sp.map <- list(idx=smc$idx,
-                 fsp=smc$fsp,
-                 code=as.character(smc$code),
-                 em=smc$endemic.mort,
-                 msdi=smc$max.sdi,
-                 b=smc$browse.damage,
-                 m=smc$mechanical.damage,
-                 gwh=smc$genetic.worth.h,
-                 gwd=smc$genetic.worth.d)}
-
+ 
+  sp.map <- list(idx=x$idx,
+                 fsp=x$fsp,
+                 code=as.character(x$code),
+                 em=x$endemic.mort,
+                 msdi=x$max.sdi,
+                 b=x$browse.damage,
+                 m=x$mechanical.damage,
+                 gwh=x$genetic.worth.h,
+                 gwd=x$genetic.worth.d)
+  
   ## verify the lengths match
-  if( length( sp.map$idx ) != length( sp.map$fsp ) ) {
+  if( length( x$idx ) != length( x$fsp ) ) {
     stop( "Rconifers Error: The lengths of the index and functional species vectors do not match." )
     return
   }
+  
   val <- .Call( "r_set_species_map", sp.map, verbose=FALSE, PACKAGE="rconifers" )
   ## no need to return the number of species assigned
 }
+
 
 set.variant <- function( var=0 ).Call( "r_set_variant", var, PACKAGE="rconifers" )
 
@@ -262,7 +293,8 @@ project <- function( x,
                     control=list(rand.err=0,
                       rand.seed=0,
                       endemic.mort=0,
-                      sdi.mort=0) )
+                      sdi.mort=0,
+                      genetic.gains=0) )
 {
 
   if( class( x ) != "sample.data" ) {
@@ -482,11 +514,11 @@ sp.sums <- function( x ) {
     ba <- sum( x$expf * x$n.stems * x$dbh^2*0.0054541539 ) / npts
     expgtbh<-sum(x$n.stems[x$tht>4.5]*x$expf[x$tht>4.5])/npts
     qmd <- sqrt( ba / expgtbh / 0.0054541359 )
-    sp.sums <- c(qmd,tht,ba,expf)
+    sp.sums <- c(qmd,tht,ba,expgtbh,expf)
   }
   
   df <- as.data.frame( t(sapply( x.by.sp, sp.sums.f, nrow(x$plots) )) )
-  names( df ) <- c("qmd","tht","ba","expf")
+  names( df ) <- c("qmd","tht","ba","bhexpf","texpf")
 
   df
 }

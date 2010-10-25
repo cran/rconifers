@@ -56,7 +56,7 @@ bounded by 0 and 20.}
 }
 
 \details{
-  The dataset is similar to the smc.txt file that is distirbuted
+  The dataset is similar to the smc.txt file that is distributed
   with the GUI version of CONIFERS. A species lookup table is nothing
   more than a data.frame with specific column names. 
 }
@@ -86,7 +86,8 @@ Washington. 91p.
 library( rconifers )
 
 ## set the variant to the SMC variant
-set.species.map(set.variant( 1 ))
+##set.species.map(set.variant( 1 ))
+set.variant( 1 )
 
 # load the SMC species coefficients into R as a data.frame object
 data( smc )

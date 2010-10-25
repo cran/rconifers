@@ -5,7 +5,7 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: smc_model.c 620 2009-01-05 17:25:02Z mritchie $	 */
+/* 	$Id: smc_model.c 671 2010-10-25 21:45:34Z mritchie $	 */
 
 //#include <malloc.h>
 #include <math.h>
@@ -500,7 +500,7 @@ void smc_calc_dbh_growth(
         return;
     }
 
-    if( total_height < 4.5)
+    if( total_height <= 4.5)
     {
         *pred_dbh_growth    =0.0;
         return; 

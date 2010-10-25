@@ -22,18 +22,19 @@ The \code{\link{data.frame}} object returned from sp.sums contains the
 following columns for each species:
 
 \describe{
-\item{expf}{The total plants per acre.}
+\item{bhexpf}{The number of plants per acre that are above 4.5 feet (breast height).}
+\item{texpf}{The total plants per acre including those below breast height (4.5 feet).}
 \item{tht}{The mean total height.}
-\item{ba}{The total basal area for all plants.}
-\item{qmd}{The quadratic mean diameter for all trees. See Details.}
+\item{ba}{The total basal area for all plants above breast height.}
+\item{qmd}{The quadratic mean diameter for all trees above breast height.}
 }
 }
 
 \details{ This function returns a \code{\link{data.frame}} object that
-	contains species level summary information. It is intended
-	demonstration only and users are encouraged to examine the
-	source code and modify. All results include all stems and not
-	only those above breast height.
+	contains species level summary information. The rownames of the 
+	data.frame object contain the species codes defined in the 
+	species.map. It is intended demonstration only and users are 
+  	encouraged to examine the source code and modify.
 }
 
 \references{
@@ -60,7 +61,8 @@ library( rconifers )
 
 #Example 1 Using SMC
 ## set the variant to the SMC variant
-set.species.map(set.variant( 1 ))
+## and set the species map to smc
+set.variant( 1 )
 
 ## grow the data that was originally swo in the smc variant
 # load and display CONIFERS example plots
@@ -81,7 +83,8 @@ dfqmd<-smry["DF","qmd"]
 
 #Example 2 Using SWO
 ## set the variant to the SWO variant
-set.species.map(set.variant( 0 ) )
+##set.species.map(set.variant( 0 ) )
+set.variant( 0 )
 
 ## grow the swo data
 # load and display CONIFERS example plots

@@ -25,7 +25,7 @@ impute( x, control=list(fpr=11.78, min.dbh=5.6, baf=40.0) )
   elements needed to call most CONIFERS functions. The inbound data
   frame objects for the plants and plots associated with the
   \code{\link{sample.data}} object must contain all the fields
-  described in the \code{\link{plants.swo}}. The control argument
+  described in the \code{\link{plants.swo}} and \code{\link{plots.swo}}. The control argument
   needs to contain at least the following elements:
 
 \describe{
@@ -73,7 +73,12 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 library( rconifers )
 
 ## set the variant to the SWO variant and set species map
-set.species.map( set.variant(0) )
+##set.species.map( set.variant(0) )
+set.variant(0)
+
+## don't change anything with the swo data.frame
+##data( swo )
+##set.species.map( swo )
 
 ## grow the data that was originally swo in the smc variant
 # load and display CONIFERS example plots

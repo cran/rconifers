@@ -1,5 +1,5 @@
 
-/* 	$Id: rconifers.c 645 2009-11-24 02:31:37Z hamannj $	 */
+/* 	$Id: rconifers.c 674 2010-10-25 22:14:00Z hamannj $	 */
 
 /* To submit to CRAN: */
 /* $ ch to conifers directory */
@@ -60,7 +60,7 @@
 /* global declarations       						*/
 /************************************************************************/
 unsigned long current_variant;
-unsigned long use_genetic_gains;
+//unsigned long use_genetic_gains;
 
 double COEFFS_VERSION;
 unsigned long N_COEFFS;
@@ -407,6 +407,7 @@ SEXP r_project_sample(
    unsigned long rand_error;
    unsigned long rand_seed;
    unsigned long use_precip_in_hg = 0;
+   unsigned long use_genetic_gains = 0;
 
    unsigned long n_plots;
    struct PLOT_RECORD *plots_ptr = NULL;
@@ -427,11 +428,13 @@ SEXP r_project_sample(
 	   sizeof( struct SPECIES_RECORD ),
 	   compare_species_by_idx );
 
+
    /* intitialize the config variables, grab them from the ctl list */
+   rand_error  = asInteger( get_list_element( ctl_sexp, "rand.err" ) );
+   rand_seed  = asInteger( get_list_element( ctl_sexp, "rand.seed" ) );
    endemic_mort = asInteger( get_list_element( ctl_sexp, "endemic.mort" ) );
    sdi_mort  = asInteger( get_list_element( ctl_sexp, "sdi.mort" ) ); 
-   rand_error  = asInteger( get_list_element( ctl_sexp, "rand.error" ) );
-   rand_seed  = asInteger( get_list_element( ctl_sexp, "rand.seed" ) );
+   use_genetic_gains  = asInteger( get_list_element( ctl_sexp, "genetic.gains" ) );
 
    
    /* all bet this damn variable is causing the troubles!!!! */

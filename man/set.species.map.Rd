@@ -9,16 +9,12 @@
   species codes to the functional species within the CONIFERS growth
   model.}
 
-\usage{set.species.map( variant )}
+\usage{set.species.map( x, verbose=FALSE )}
 
 		   
 \arguments{
-  \item{variant}{0 or 1:
-  \describe{
-  	    \item{0}{indicator for SWO variant}
-  	    \item{1}{indicator for SMC variant}
-  }
-}
+  \item{x}{ is a data.frame object with the same columns as \code{\link{smc}} and \code{\link{swo}}}
+  \item{verbose}{ is switch for controlling the verbosity of the operation.}
 }
 
 
@@ -36,7 +32,7 @@
 \details{The set.species.map is how the user controls the behavior of
 the functional species that is used to project individual plants
 forward. The idx *must* be a zero-offset index vector which is
-assigned the element \code{SPECIES_RECORD[idx]} in the model. This
+assigned the element \code{SPECIES_RECORD[idx]} in the model (see \code{\link{smc}}). This
 function is used to control the mapping between the user species code
 and the functional species codes in the growth model.
 }
@@ -73,13 +69,23 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 
 \examples{
 library( rconifers )
+
 # Example 1
 ## set the variant to the SWO variant and set species map
-set.species.map( set.variant(0))
+set.variant(0)
+data( swo )
+set.species.map( swo )
 
 # Example 2
 ## set the variant to the SMC variant
-set.species.map( set.variant(1))
+set.variant(1)
+
+## and manually set the genetic worth values in the functional species coefficients
+data( smc )
+smc[smc$code == 'DF',]$genetic.worth.d <- 20
+smc[smc$code == 'DF',]$genetic.worth.h <- 20
+set.species.map( smc, verbose=TRUE )
+
 
 }
 

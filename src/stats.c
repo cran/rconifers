@@ -5,7 +5,7 @@
 /*                                                                              */
 /********************************************************************************/
                                                                                 
-/* 	$Id: stats.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: stats.c 671 2010-10-25 21:45:34Z mritchie $	 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -244,22 +244,22 @@ void fill_in_missing_values(
       /* if the stem is all below d6  */
       if( plant_ptr->tht < 0.50 && !is_non_stocked( c_ptr ) )
       {        
-	 plant_ptr->errors |= E_INVALID_HEIGHT;
-	 error_count += 1;
+	    plant_ptr->errors |= E_INVALID_HEIGHT;
+	    error_count += 1;
       }
 
-      /* if the total height < 4.5 and there's a dbh obs */
-      if( plant_ptr->tht < 4.5 && plant_ptr->dbh > 0.0 )
+      /* if the total height <= 4.5 and there's a dbh obs */
+      if( plant_ptr->tht <= 4.5 && plant_ptr->dbh > 0.0 )
       {
-	 plant_ptr->errors |= E_INVALID_DBH;
-	 error_count += 1;
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
       }
 
       /* if it's a tree with a dbh obs */
       if(!is_tree( c_ptr) && plant_ptr->dbh > 0.0)
       {
-	 plant_ptr->errors |= E_INVALID_DBH;
-	 error_count += 1;
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
       }
 
 
@@ -628,9 +628,9 @@ void calc_plot_stats_2(
 	       plot_ptr->ca_c         += p_ptr->crown_area * p_ptr->expf;
 	       plot_ptr->d6ba_c       += p_ptr->d6_area    * p_ptr->expf;
 
-	       if(p_ptr->tht >= 4.5 )
+	       if(p_ptr->tht > 4.5 )
 	       {
-		  plot_ptr->bh_expf  += p_ptr->expf;
+		      plot_ptr->bh_expf  += p_ptr->expf;
 	       }
 
 	       plot_ptr->basal_area   += p_ptr->basal_area * p_ptr->expf;
@@ -644,9 +644,9 @@ void calc_plot_stats_2(
 	       plot_ptr->ca_h         += p_ptr->crown_area * p_ptr->expf;
 	       plot_ptr->d6ba_h       += p_ptr->d6_area    * p_ptr->expf;
 
-	       if(p_ptr->tht >= 4.5 )
+	       if(p_ptr->tht > 4.5 )
 	       {
-		  plot_ptr->bh_expf  += p_ptr->expf;
+		      plot_ptr->bh_expf  += p_ptr->expf;
 	       }
 
 	       plot_ptr->basal_area   += p_ptr->basal_area * p_ptr->expf;
@@ -1017,7 +1017,7 @@ void update_fsp_summaries(
 	 /* MOD012 */
 	 /*  calculate the expf for trees        */
 	 /*  above bh (conifs and hwoods only)   */
-	 if ( plant_ptr->tht >= 4.5 )
+	 if ( plant_ptr->tht > 4.5 )
 	 {           
 	    /* only sum up the values for the trees that    */
 	    /* are over 4.5 feet  tall                      */
@@ -1378,7 +1378,7 @@ void update_species_summaries(
 	 /* MOD012 */
 	 /*  calculate the expf for trees        */
 	 /*  above bh (conifs and hwoods only)   */
-	 if ( plant_ptr->tht >= 4.5 )
+	 if ( plant_ptr->tht > 4.5 )
 	 {           
 	    /* only sum up the values for the trees that    */
 	    /* are over 4.5 feet  tall                      */
@@ -1668,7 +1668,7 @@ void update_total_summaries(
 
       /* only sum up the values for the trees that    */
       /* are over 4.5 feet  tall                      */
-      if( plant_ptr->tht >= 4.5 )
+      if( plant_ptr->tht > 4.5 )
       {
 	 /*  MOD034  */
 	 if( is_tree( c_ptr ) )

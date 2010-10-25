@@ -85,8 +85,8 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 \examples{
 library( rconifers )
 
-## set the variant to the SWO variant and set species map
-set.species.map(set.variant( 0 ))
+## set the variant to the SWO variant and set species map to swo
+set.variant( 0 )
 
 ## grow the data that was originally swo in the smc variant
 # load and display CONIFERS example plots

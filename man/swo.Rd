@@ -90,6 +90,8 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 \examples{
 library( rconifers )
 
+
+
 # load the Southwest-Oregon species coefficients into R as a data.frame object
 data( swo )
 #view max sdi
@@ -98,7 +100,7 @@ swo$max.sdi
 swo$max.sdi[1]<-600
 
 ## set the variant to the SWO variant and use the new Douglas-fir max sdi
-set.species.map(set.variant( 0 ))
+set.species.map( swo )
 
 
 }

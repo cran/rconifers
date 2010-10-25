@@ -40,7 +40,8 @@ library( rconifers )
 
 ## set the variant to the SWO variant
 # and set the species map
-set.species.map( set.variant(0) )
+##set.species.map( set.variant(0) )
+set.variant(0)
 
 # load and display CONIFERS SWO example plots
 data( plots.swo )

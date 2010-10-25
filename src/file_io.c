@@ -88,10 +88,10 @@
 /*                                                                          */
 /****************************************************************************/
 
-/* 	$Id: file_io.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: file_io.c 671 2010-10-25 21:45:34Z mritchie $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: file_io.c 610 2008-11-25 23:03:59Z hamannj $"; */
+/* static char vcid[] = "$Id: file_io.c 671 2010-10-25 21:45:34Z mritchie $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -1233,7 +1233,7 @@ void __stdcall write_organon_file(
           || !species_ptr[plant_ptr->sp_idx].organon_sp_code                      /* not organon plant */      
           || !is_tree( &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx])       /* not a tree        */ 
           || plant_ptr->dbh  < 0.1                                                /* too little        */
-          || plant_ptr->tht  < 4.5                                                /* too short         */ 
+          || plant_ptr->tht  <= 4.5                                                /* too short         */ 
           || plant_ptr->expf < 0.00001 )                                          /* expf is ~zero     */ 
         {    /* then it should be skipped unless we need to write a placeholder for empty plot         */
              if(last_plot == plant_ptr->plot)
@@ -2375,7 +2375,7 @@ void __stdcall write_organon_inp(
             continue;
         }
 
-        if( plant_ptr->tht  < 4.5 )
+        if( plant_ptr->tht  <= 4.5 )
         {
             continue;
         }
@@ -2451,7 +2451,7 @@ void __stdcall write_organon_inp(
             continue;
         }
 
-        if( plant_ptr->tht  < 4.5 )
+        if( plant_ptr->tht  <= 4.5 )
         {
             continue;
         }
