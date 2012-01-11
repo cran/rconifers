@@ -1,21 +1,26 @@
-
-\name{print.sample.data}
-\alias{print.sample.data}
-\title{Print a CONIFERS sample.data object}
+\name{plot.sample.data}
+\alias{plot.sample.data}
+\title{Summary plot of a CONIFERS sample.data object}
 
 \description{
-   These functions print a few summary values from a sample.data object.
+   These functions create and plot summary results for a CONIFERS
+   sample.data object.
 }
 
 \usage{
-   \method{print}{sample.data}( x,
-      digits = max( 3, getOption("digits") - 1 ), \dots )
+   \method{plot}{sample.data}(x, digits = max(3, getOption("digits") - 1), ...)
 }
 
 \arguments{
-   \item{x}{an object of class \code{sample.data}.}
-   \item{digits}{number of digits to print.}
-   \item{\dots}{other arguments.}
+   \item{x}{an object of class \code{\link{sample.data}}.}
+   \item{digits}{the number of digits to display.}
+   \item{...}{not used by user.}
+}
+
+\value{Applying \code{plot} on an object of class
+   \code{\link{sample.data}} generates a simple summary of the
+   \code{\link{sample.data}}. A \code{\link{sample.data}} object is
+   the basic data type used for most CONIFERS functions.
 }
 
 
@@ -60,11 +65,7 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
   \code{\link{variants}}
 }
 
-
 \examples{
-
-## set the number of digits for the output to five (5)
-options(digits=5)
 
 ## load the CONIFERS library
 library( rconifers )
@@ -72,29 +73,29 @@ library( rconifers )
 ## set the variant to the SWO variant.
 set.variant( 0 )
 
-## load the species coefficients into R as a data.frame object and
-## set the species map
+# load the SWO species specific coefficients into R as a data.frame object
 data( species.swo )
-print( species.swo )
 set.species.map( species.swo )
 
-## grow the smc example data
-## load and display CONIFERS example swo plots
+## load and print the plots for the SWO example dataset.
 data( plots.swo )
 print( plots.swo )
 
-## load and display CONIFERS example swo plants
+## load and print the plants for the SWO example dataset.
 data( plants.swo )
 print( plants.swo )
 
-## create the sample.data list object
-sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0,
-  n.years.projected=0 )
+# create the sample.data list object
+sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0,n.years.grown=0 )
 class(sample.swo.3)  <- "sample.data"
-print( sample.swo.3)
 
+## generate a generic summary plot 
+plot(sample.swo.3)
 
 
 }
 
 \keyword{models}
+
+
+

@@ -6,9 +6,17 @@ plants.smc              Simple plant data set for the SMC variant of
                         the CONIFERS growth model.
 plants.swo              Simple plant data set for the SWO Variant of
                         the CONIFERS growth model
+plants.swohybrid        Simple plant data set for the SWO-Hybrid Variant of
+                        the CONIFERS growth model
+plants.cips        	    Simple plant data set for the CIPS Variant of
+                        the CONIFERS growth model
 plots.smc               Example plots data set for CONIFERS growth
                         model
 plots.swo               Example plots data set for SWO Variant of the
+                        CONIFERS growth model
+plots.swohybrid         Example plots data set for SWO-Hybrid Variant of the
+                        CONIFERS growth model
+plots.cips         	    Example plots data set for CIPS Variant of the
                         CONIFERS growth model
 print.sample.data       Print a CONIFERS sample.data object
 project                 Projects a sample.data object using the
@@ -29,3 +37,7 @@ swo                     Species table for the SWO variant of the
                         CONIFERS growth model
 thin                    Thin a CONIFERS sample.data object with
                         user-defined settings.
+swohybrid               Species table for the SWO-Hybrid variant of the
+                        CONIFERS growth model
+cips               	    Species table for the CIPS variant of the
+                        CONIFERS growth model

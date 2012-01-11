@@ -2,16 +2,16 @@
 %%	$Id $	
 
 \keyword{datasets}
-\name{plants.swo}
-\alias{plants.swo}
+\name{plants.swohybrid}
+\alias{plants.swohybrid}
 \non_function{}
-\title{Simple plant data set for the SWO Variant of the CONIFERS growth model}
-\usage{data(plants.swo)}
+\title{Simple plant data set for the SWO-Hybrid Variant of the CONIFERS growth model}
+\usage{data(plants.swohybrid)}
 
 \description{
 This a simple plants \code{\link{data.frame}} that contains basic plant attributes used in the CONIFERS growth model.
 
-The \code{plants.swo} \code{\link{data.frame}} has 60 rows and 9 columns.
+The \code{plants.swohybrid} \code{\link{data.frame}} has 60 rows and 9 columns.
 }
 
 \format{
@@ -19,10 +19,10 @@ The \code{plants.swo} \code{\link{data.frame}} has 60 rows and 9 columns.
   
   \describe{
     \item{plot}{The plot identifier.}
-    \item{sp.code}{species code (See \code{\link{species.swo}},
-    \code{\link{species.smc}}, or \code{\link{species.swohybrid}})}
     % \item{sp.code}{species code (See \code{\link{species.swo}},
     % \code{\link{species.smc}}, \code{\link{species.cips}}, or \code{\link{species.swohybrid}})}
+    \item{sp.code}{species code (See \code{\link{species.swo}},
+    \code{\link{species.smc}}, or \code{\link{species.swohybrid}})}
     \item{d6}{Diameter at 6 inches above soil interface.}
     \item{dbh}{Diameter at breast height, in inches.}
     \item{tht}{Total height of the stem, in feet.}
@@ -50,6 +50,7 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 
 \author{Jeff D. Hamann \email{jeff.hamann@forestinformatics.com},\cr
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
+
 
 
 \seealso{
@@ -90,19 +91,33 @@ options(digits=5)
 ## load the rconifers library
 library( rconifers )
 
-## set the variant to the SWO variant.
-set.variant( 0 )
+## set the variant to the SWOHYBRID variant.
+set.variant( 2 )
 
 ## load and set the species mapping
-data( species.swo )
-print( species.swo )
-set.species.map( species.swo )
+data( species.swohybrid )
+print( species.swohybrid )
+set.species.map( species.swohybrid )
 
-## load and display the plants
-data( plants.swo )
-print( plants.swo )
+## load and display the plant data
+data( plants.swohybrid )
+print( plants.swohybrid )
+
+## load and display the plot data
+data( plots.swohybrid )
+print( plots.swohybrid )
+
+## create the sample.data list object
+sample.swohybrid <- list( plots=plots.swohybrid, plants=plants.swohybrid, age=3, x0=0.0, n.years.projected=0 )
+class(sample.swohybrid)  <- "sample.data"
+
+## print and plot the sample
+print( sample.swohybrid )
+plot( sample.swohybrid )
+
 
 }
+
 
 \keyword{datasets}
 

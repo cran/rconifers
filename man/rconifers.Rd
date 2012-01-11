@@ -55,30 +55,52 @@ Washington. 91p.
 \author{Jeff D. Hamann \email{jeff.hamann@forestinformatics.com},\cr
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
-\seealso{    \code{\link{calc.max.sdi}},
-	     \code{\link{impute}},
-	     \code{\link{plants.smc}},
-	     \code{\link{plants.swo}},
-	     \code{\link{plots.smc}}
-	     \code{\link{plots.swo}}
-	     \code{\link{project}},
-	     \code{\link{rand.seed}},
-	     \code{\link{rconifers}},
-	     \code{\link{sample.data}},	     		  
-	     \code{\link{set.species.map}},		  
-	     \code{\link{set.variant}},		  
- 	     \code{\link{smc}}, 
- 	     \code{\link{summary.sample.data}},
-	     \code{\link{swo}}, 
-	     \code{\link{thin}}
+
+\seealso{
+  \code{\link{calc.max.sdi}},
+  \code{\link{impute}},
+  % \code{\link{plants.cips}},
+  \code{\link{plants.smc}},
+  \code{\link{plants.swo}},
+  \code{\link{plants.swohybrid}},
+  \code{\link{plot.sample.data}},
+  % \code{\link{plots.cips}},
+  \code{\link{plots.smc}},
+  \code{\link{plots.swo}},
+  \code{\link{plots.swohybrid}},
+  \code{\link{print.sample.data}},
+  \code{\link{project}},
+  \code{\link{rand.seed}},
+  \code{\link{rconifers}},
+  \code{\link{sample.data}},
+  \code{\link{set.species.map}},
+  \code{\link{set.variant}},
+  % \code{\link{species.cips}},
+  \code{\link{species.smc}},
+  \code{\link{species.swo}},
+  \code{\link{species.swohybrid}},
+  \code{\link{sp.sums}},
+  \code{\link{summary.sample.data}},
+  \code{\link{thin}},
+  \code{\link{variants}}
 }
 
 \examples{
+
+
+## set the number of digits for the output to five (5)
+options(digits=5)
+
 library( rconifers )
 
 ## set the variant to the SWO variant and set species map
 ##set.species.map( set.variant(0) )
 set.variant(0)
+
+
+## set the species map
+data( species.swo )
+set.species.map( species.swo )
 
 ## grow the data that was originally swo in the smc variant
 # load and display CONIFERS example plots
@@ -90,7 +112,8 @@ data( plants.swo )
 print( plants.swo )
 
 # create the sample.data list object
-sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0 )
+sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0,
+ n.years.projected=0)
 class(sample.swo.3)  <- "sample.data"
 
 # print the maximum stand density index for the current settings
@@ -124,6 +147,7 @@ print( sample.swo.23.t2 )
 sample.swo.23.t3 <- thin( sample.swo.23,
 	     control=list(type=3, target=50.0 ) )
 print( sample.swo.23.t3 )
+
 
 ## Thin from below, by dbh for species "PM"
 sample.swo.23.t4 <- thin( sample.swo.23,

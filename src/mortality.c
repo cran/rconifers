@@ -6,6 +6,8 @@
 /*                                                                              */
 /********************************************************************************/
 
+/* 	$Id: mortality.c 853 2012-01-24 02:05:20Z hamannj $	 */
+
 /*------------------------------------------------------------------------------*/
 /*  functions index                                                             */
 /*    1. calc_sdi_mortality                                                     */
@@ -13,38 +15,15 @@
 /*                                                                              */
 /*------------------------------------------------------------------------------*/
 
-/********************************************************************************/
-/*                          Revision History                                    */
-/*                                                                              */
-/*  Number  Date        Who     Revision Notes                                  */
-/********************************************************************************/
-/*                                                                              */
-/*  MOD001  Jan11,2000  MWR     added manage xo function                        */
-/********************************************************************************/
 
-/* 	$Id: mortality.c 616 2008-12-30 17:51:32Z mritchie $	 */
-
-/* #ifndef lint */
-/* static char vcid[] = "$Id: mortality.c 616 2008-12-30 17:51:32Z mritchie $"; */
-/* #endif /\* lint *\/ */
-
-
-
-//#include <malloc.h>
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "conifers.h"
 
-/* these are here for temporary debugging */
-//#include <R.h>
-//#include <Rdefines.h>
-//#include <Rinternals.h>
-//#include <Rmath.h>
-//#include <R_ext/Rdynload.h>
+#include "conifers.h"
 
 
 /********************************************************************************/
@@ -120,9 +99,9 @@ void calc_sdi_mortality(
    }
 
    /*  from Hann and Wang Paper */
-   a3 = 1.47343;
-   a2 = -1.0 / REINEKE_B1;
-   a1 = log(10.0) - a2 * log(sdimax);
+   a3 = 1.47343f;
+   a2 = -1.0f / REINEKE_B1;
+   a1 = log(10.0f) - a2 * log(sdimax);
    xi = log(bhtpa);
    rd = sdi / sdimax;
 
@@ -130,7 +109,7 @@ void calc_sdi_mortality(
    myi = a1 + a2 * log(bhtpa);
 
    /* calculate y0 as a function of x0 and sdimax H&W page 10 */
-   y0 = log(10.0) - a2 * (log( CRITICAL_RD * sdimax) ) + a2 * x0;
+   y0 = log(10.0f) - a2 * (log( CRITICAL_RD * sdimax) ) + a2 * x0;
 
    /* caluculate yi H&W page 8, equation 4*/
    yi = myi - (a1 + a2 * x0 - y0) * exp( - a3 * (x0 - xi) );
@@ -139,7 +118,7 @@ void calc_sdi_mortality(
    /* the .001 correction here is to handle real close comparisons */
    /* or the very first iteration. Basically anything real close   */
    /* to the Hann and Wang trajectory                              */
-   if( qmd  <= exp (yi) + .001 )
+   if( qmd  <= exp (yi) + .001f )
    {
       *mortality_proportion = 0.0;    /* then don't do any mortality  */
       *return_code = CONIFERS_SUCCESS; /* this is H&W step 3          */
@@ -153,7 +132,7 @@ void calc_sdi_mortality(
 
       /*  set up a loop to find the solution ?    */
       /* is this the interval bisection method?   */
-      for( i = 0; i < 40000; i++ )
+      for( i = 0; i < 500000; i++ )
       {
 	 qq *= 0.5;
 	 yi = (a1 + a2 * log(tpa_iter)) - (a1 + a2 * x0 - y0) 
@@ -168,10 +147,16 @@ void calc_sdi_mortality(
 	    tpa_iter -= qq;
 	 }
 
+     /* todo: make sure this can pass mutli-platform precision checks   */ 
 	 //if( fabs( exp( yi ) - qmd ) < 0.0001 )
-	 if( fabs( exp( yi ) - qmd ) < 0.1 )
+	 //if( fabs( exp( yi ) - qmd ) < 0.1 )
+	 //if( fabs( exp( yi ) - qmd ) < 0.0000001 )
+     //2.220446e-16
+
+     if( fabs( exp( yi ) - qmd ) < 2.220446e-16 )  /* double precision */
+	 //if( fabs( exp( yi ) - qmd ) < 1.192093e-07 )   /* single precision */
 	 {
-	    *mortality_proportion = 1.0 - tpa_iter / bhtpa;
+	    *mortality_proportion = (double)(1.0 - tpa_iter / bhtpa);
 	    *return_code = CONIFERS_SUCCESS;
 	    return;
 	 }
@@ -179,10 +164,13 @@ void calc_sdi_mortality(
     
       /*   if you get here we have a problem   */
       *return_code = CONIFERS_ERROR;
-      *mortality_proportion = 1.0;
+      *mortality_proportion = 1.0f;
       return;
    }
 }
+
+
+
 
 /*  MOD020   */
 /*  MOD023   */
@@ -232,7 +220,6 @@ void calc_hann_wang_x0(
    {
       *return_code = CONIFERS_MORT_ERROR; 
       *x0 = 0.0;
-//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 	
@@ -254,7 +241,6 @@ void calc_hann_wang_x0(
       if ( *x0 <= 0.0 )
       {
 	 *return_code = CONIFERS_MORT_ERROR;
-	 //Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       }
       return; /* don't do anything leave x0 as it is */
    }
@@ -268,16 +254,15 @@ void calc_hann_wang_x0(
       if(*x0 > 0.0)
       {
 	 *return_code = CONIFERS_MORT_ERROR;
-//	 Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
 	 return;
       }
       ratio = log(CRITICAL_RD) / log( sdi / sdimx );
-      *x0   = log( bhtpa ) + 0.678688502 * log( ratio ); 
+      *x0   = log( bhtpa ) + 0.678688502f * log( ratio ); 
       /* for stands above the max sdi... */
       if( sdi >= sdimx ) 
       {
 	 *x0 =    log( bhtpa ) +
-	    0.678688502 * log(log(CRITICAL_RD) / log( 0.99 ) );
+	    0.678688502f * log(log(CRITICAL_RD) / log( 0.99f ) );
       }
    }
 } 
@@ -321,7 +306,6 @@ void calc_init_x0(
    if( bhtpa <= 0.0 || sdi <= 0.0)
    {
       *x0 = 0.0;	
-//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 
@@ -330,7 +314,6 @@ void calc_init_x0(
    {
       *return_code = CONIFERS_MORT_ERROR; 
       *x0 = 0.0;
-//      Rprintf( "CONIFERS_MORT_ERROR %s, %d\n", __FILE__, __LINE__ );
       return;
    }
 
@@ -338,12 +321,12 @@ void calc_init_x0(
    {
     
       ratio = log(CRITICAL_RD) / log( sdi / sdimx );
-      *x0   = log( bhtpa ) + 0.678688502 * log( ratio ); 
+      *x0   = log( bhtpa ) + 0.678688502f * log( ratio ); 
       /* for stands above the max sdi... */
       if( sdi >= sdimx ) 
       {
 	 *x0 =    log( bhtpa ) +
-	    0.678688502 * log(log(CRITICAL_RD) / log( 0.99 ) );
+	    0.678688502f * log(log(CRITICAL_RD) / log( 0.99f ) );
       }
       return;
    }

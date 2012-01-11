@@ -7,7 +7,7 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: thin.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: thin.c 840 2011-11-22 23:47:23Z hamannj $	 */
 
 #include <math.h>
 #include <memory.h>
@@ -16,15 +16,6 @@
 #include <string.h>
 
 #include "conifers.h"
-
-
-/* #include <R.h> */
-/* #include <Rdefines.h> */
-/* #include <Rinternals.h> */
-/* #include <Rmath.h> */
-/* #include <R_ext/Rdynload.h> */
-
-
 
 
 static int compare_DBH_increasing( 
@@ -172,7 +163,7 @@ void __stdcall thin_plot(
     struct  PLANT_RECORD    *plant_ptr;
     struct COEFFS_RECORD    *c_ptr;
 
-    /*  MOD002 declare variables  */
+    /*  declare variables  */
     unsigned long           start_idx;
     unsigned long           end_idx;
     unsigned long           n_plant_records_on_plot;
@@ -193,10 +184,7 @@ void __stdcall thin_plot(
 
     switch( thin_guide )
     {
-        /*  Case 0 is the sdi driven mortality reduction in expf  */
         /* this is the routine that actually does the sdi mortality */
-        /*  I was going to make it a separate function but it is so */
-        /*  simple, it wasn't waranted...                           */                
         case DO_SDI_MORT:    
 
             plant_ptr = &plants_ptr[0];
@@ -209,7 +197,6 @@ void __stdcall thin_plot(
                 }
                 c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
 
-                /* MODXXX */
                 if( is_tree( c_ptr ) )
                 {       
                     /* target is mortality proportion from sdi mortality    */
@@ -220,9 +207,8 @@ void __stdcall thin_plot(
             }
         break;
 
-        /*  MOD000  */    
-        case DO_EXPF_SP_THIN:                    /* TPA thin for a species             */
-
+        case DO_EXPF_SP_THIN:                    
+            /* TPA thin for a species             */
             do_expf_sp_thinning( 
                             return_code,
                             n_plants,
@@ -240,9 +226,7 @@ void __stdcall thin_plot(
 
         break;
 
-        /* MOD003  */
         case DO_EXPF_THIN:        
-
             /*  thin to target tpa for all species on the plot  */
             do_expf_thinning(
                             return_code,
@@ -259,7 +243,6 @@ void __stdcall thin_plot(
         break;     
 
 
-        /* MODXXX */
         /*  thin to target tpa for all species on the plot  */
         case DO_EXPF_THIN_FROM_BELOW:
             do_expf_thinning_from_below(
@@ -277,10 +260,8 @@ void __stdcall thin_plot(
 
         break;     
 
-        /* MODXXX */
-        /*  thin to target tpa for all species on the plot  */
+        /*  thin to target tpa for specific species on the plot  */
         case DO_EXPF_SP_THIN_FROM_BELOW:
-
             do_expf_sp_thinning_from_below(
                             return_code,
                             n_plants,
@@ -299,6 +280,7 @@ void __stdcall thin_plot(
         break;     
 
 
+        /* todo: if you want to create a new thinning type, add it here. */
 
 
         default:
@@ -359,14 +341,10 @@ static void do_expf_sp_thinning(
     unsigned long           i;
     struct  PLANT_RECORD    *plant_ptr;
 
-    //struct COEFFS_RECORD    *c_ptr;             /* temporary coeffs record        */
     unsigned long           n_sp_on_plot;       /* size of the species sums array */
     struct SUMMARY_RECORD   *plot_sum_ptr;      /* array of species sums */
     struct SUMMARY_RECORD   *target_species_plot_summary;
 
-    /* used to lookup the species record by sp_code */
-//    struct SPECIES_RECORD   *s_ptr;
-    
 
     /* initializations */
     start_idx               =0;   /* starting place in tree list for current plot */
@@ -408,40 +386,10 @@ static void do_expf_sp_thinning(
                             n_sp_on_plot,
                             plot_sum_ptr );
 
-    /* you need to sort the species_ptr array by sp_code */
-    /* get the lookup code, and then resort by idx      */
-/*
-    qsort(  (void*)species_ptr, 
-            (size_t)(n_species), 
-            sizeof( struct SPECIES_RECORD ),
-	        compare_species_by_sp_code );
-
-    s_ptr = get_species_entry_from_code(    n_species,
-                                            species_ptr, 
-                                            thin_species_code );
-
-    if( !s_ptr )
-    {
-        *return_code=INVALID_SP_CODE;
-        free(plot_sum_ptr);
-        return;
-    }
-
-    target_species_plot_summary = get_summary_from_code(    n_sp_on_plot,
-                                                            plot_sum_ptr,
-                                                            s_ptr->idx );
-                                                            //thin_species_code );
-*/
 
     target_species_plot_summary = get_summary_from_code(    n_sp_on_plot,
                                                             plot_sum_ptr,
                                                             thin_species_idx );
-                                                            //s_ptr->idx );
-
-//    qsort(  (void*)species_ptr, 
-//            (size_t)(n_species), 
-//            sizeof( struct SPECIES_RECORD ),
-//	        compare_species_by_idx );
 
     /*species not on plot */
     if(target_species_plot_summary == NULL)  
@@ -473,10 +421,6 @@ static void do_expf_sp_thinning(
             continue;
         }
 
-        //species_ptr[plant_ptr->sp_idx].sp_code
-
-        //if(strcmp(plant_ptr->sp_code, thin_species_code))
-        //if(strcmp( species_ptr[plant_ptr->sp_idx].sp_code, thin_species_code))
         if( plant_ptr->sp_idx != thin_species_idx )
         {
             continue;
@@ -596,14 +540,6 @@ static void do_expf_thinning(
     /*loop through the specs */
     for ( i=0; i < n_sp_on_plot; i++, temp_plot_record++ )
     {
-        //c_ptr   = get_coeffs_entry(
-        //                    n_species,
-        //                    species_ptr,
-         //                   n_coeffs,
-         //                   coeffs_ptr,
-         //                   temp_plot_record->code );
-
-        //c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
         c_ptr = &coeffs_ptr[species_ptr[temp_plot_record->code].fsp_idx];
 
         /* check for trees only!  */
@@ -627,13 +563,6 @@ static void do_expf_thinning(
     plant_ptr = &plants_ptr[start_idx];
     for( i = start_idx; i <= end_idx; i++, plant_ptr++ )
     {
-        //c_ptr   = get_coeffs_entry(
-        //                    n_species,
-        //                    species_ptr,
-        //                    n_coeffs,
-        //                    coeffs_ptr,
-        //                    plant_ptr->sp_code);
-
         c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
 
         /* check for trees only!  */
@@ -940,57 +869,9 @@ static void do_expf_sp_thinning_from_below(
     temp_plot_record = &plot_sum_ptr[0];
     for( i = 0; i < n_sp_on_plot; i++, temp_plot_record++ )
     {
-        //c_ptr   = get_coeffs_entry(
-        //                    n_species,
-        //                    species_ptr,
-        //                    n_coeffs,
-        //                    coeffs_ptr,
-        //                    temp_plot_record->code );
-
-        //c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
         c_ptr = &coeffs_ptr[species_ptr[temp_plot_record->code].fsp_idx];
 
-
-        /* check for trees only!  */
-        //if( is_tree( c_ptr ) && 
-        //    strcmp( temp_plot_record->code, thin_species_code ) == 0 )
-        
-        //if( is_tree( c_ptr ) && 
-        //    strcmp( species_ptr[plant_ptr->sp_idx].sp_code, thin_species_code) == 0 )
-
-
-    /* you need to sort the species_ptr array by sp_code */
-    /* get the lookup code, and then resort by idx      */
-/*
-    qsort(  (void*)species_ptr, 
-            (size_t)(n_species), 
-            sizeof( struct SPECIES_RECORD ),
-	        compare_species_by_sp_code );
-
-    s_ptr = get_species_entry_from_code(    n_species,
-                                            species_ptr, 
-                                            thin_species_code );
-
-    if( !s_ptr )
-    {
-        *return_code=INVALID_SP_CODE;
-        free(plot_sum_ptr);
-        return;
-    }
-
-    //target_species_plot_summary = get_summary_from_code(    n_sp_on_plot,
-    //                                                        plot_sum_ptr,
-    //                                                        s_ptr->idx );
-
-    qsort(  (void*)species_ptr, 
-            (size_t)(n_species), 
-            sizeof( struct SPECIES_RECORD ),
-	        compare_species_by_idx );
-*/
-
         if( is_tree( c_ptr ) && ( temp_plot_record->code == thin_species_idx ) )
-//            strcmp( species_ptr[temp_plot_record->code].sp_code, thin_species_code) == 0 )
-            //strcmp( species_ptr[plant_ptr->sp_idx].sp_code, thin_species_code) == 0 )
         {
             total_trees += temp_plot_record->expf;
         }
@@ -1021,20 +902,8 @@ static void do_expf_sp_thinning_from_below(
     plant_ptr = &plants_ptr[start_idx];
     for( i = start_idx; i <= end_idx; i++, plant_ptr++ )
     {
-        //c_ptr   = get_coeffs_entry(
-        //                    n_species,
-        //                    species_ptr,
-        //                    n_coeffs,
-        //                    coeffs_ptr,
-        //                    plant_ptr->sp_code);
-
-        /* check for trees only!  */
-        //if( is_tree( c_ptr ) && 
-        //    strcmp( plant_ptr->sp_code, thin_species_code ) == 0 )
         c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
 
-        //if( is_tree( c_ptr ) && 
-        //    strcmp( species_ptr[plant_ptr->sp_idx].sp_code, thin_species_code) == 0 )
         if( is_tree( c_ptr ) && ( plant_ptr->sp_idx == thin_species_idx ) )
         {
 

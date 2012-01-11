@@ -29,17 +29,28 @@ thin( x,control=list(type=2,target=50.0,target.sp=NULL ) )
   4 \tab Thin from below, by dbh, species identified with \code{sp.code}\cr
 }
 
-\item{target}{target thinning level. The value is the targeted value for
-  the thinning operation. For an SDI thin, 0, the target is SDI in English
-  units. For remaining thinning operations, target is expressed in stems
-  per acre.}
+% \item{target}{target thinning level. The value is the targeted value for
+%   the thinning operation. For an SDI thin, 0, the target is SDI in
+%   English units. For remaining thinning operations, target is expressed
+%   in stems per acre. (See \code{\link{species.swo}},
+%   \code{\link{species.smc}}, \code{\link{species.cips}}, or
+%   \code{\link{species.swohybrid}}).  For proportional thinning
+%   (i.e. type=2 or 3), the species must be set to \code{NULL}
+%   (i.e. sp=NULL)}.
 
-\item{target.sp}{ is a character vector that defines the target
-thinning species. This value should be in the species map (see
-\code{\link{swo}} and \code{\link{smc}}). For proportional thinning
-(i.e. type=2 or 3), the species must be set to \code{NULL}
-(i.e. sp=NULL)}.
-}  
+% }
+
+
+\item{target}{target thinning level. The value is the targeted value for
+  the thinning operation. For an SDI thin, 0, the target is SDI in
+  English units. For remaining thinning operations, target is expressed
+  in stems per acre. (See \code{\link{species.swo}},
+  \code{\link{species.smc}}, or \code{\link{species.swohybrid}}).
+  For proportional thinning
+  (i.e. type=2 or 3), the species must be set to \code{NULL}
+  (i.e. sp=NULL)}.
+
+}
 
 The default thinning regime is to remove 50 percent of all trees
 across all diameter classes. 
@@ -77,18 +88,55 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 \author{Jeff D. Hamann \email{jeff.hamann@forestinformatics.com},\cr
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
-\seealso{\code{\link{sample.data}},
-	     \code{\link{set.species.map}},		  
- 	     \code{\link{summary.sample.data}},
+
+\seealso{
+  \code{\link{calc.max.sdi}},
+  \code{\link{impute}},
+  % \code{\link{plants.cips}},
+  \code{\link{plants.smc}},
+  \code{\link{plants.swo}},
+  \code{\link{plants.swohybrid}},
+  \code{\link{plot.sample.data}},
+  % \code{\link{plots.cips}},
+  \code{\link{plots.smc}},
+  \code{\link{plots.swo}},
+  \code{\link{plots.swohybrid}},
+  \code{\link{print.sample.data}},
+  \code{\link{project}},
+  \code{\link{rand.seed}},
+  \code{\link{rconifers}},
+  \code{\link{sample.data}},
+  \code{\link{set.species.map}},
+  \code{\link{set.variant}},
+  % \code{\link{species.cips}},
+  \code{\link{species.smc}},
+  \code{\link{species.swo}},
+  \code{\link{species.swohybrid}},
+  \code{\link{sp.sums}},
+  \code{\link{summary.sample.data}},
+  \code{\link{thin}},
+  \code{\link{variants}}
 }
 
+
 \examples{
+
+## set the number of digits for the output to five (5)
+options(digits=5)
+
+## Example 1. Basic functions and features of the package.
+## load the CONIFERS library
 library( rconifers )
 
-## set the variant to the SWO variant and set species map to swo
+## set the variant to the SWO variant.
+## the set.variant command also assigns the species map to the default species map data.frame
 set.variant( 0 )
 
-## grow the data that was originally swo in the smc variant
+# load the SWO species coefficients into R as a data.frame object
+data( species.swo )
+set.species.map( species.swo )
+
+## grow the data that was originally in the swo variant
 # load and display CONIFERS example plots
 data( plots.swo )
 print( plots.swo )
@@ -98,7 +146,8 @@ data( plants.swo )
 print( plants.swo )
 
 # create the sample.data list object
-sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0 )
+sample.swo.3 <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0,
+  n.years.projected=0 )
 class(sample.swo.3)  <- "sample.data"
 
 # now, project the sample forward for 20 years

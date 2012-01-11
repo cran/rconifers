@@ -25,10 +25,10 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: plot.c 610 2008-11-25 23:03:59Z hamannj $	 */
+/* 	$Id: plot.c 854 2012-02-06 23:37:24Z hamannj $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: plot.c 610 2008-11-25 23:03:59Z hamannj $"; */
+/* static char vcid[] = "$Id: plot.c 854 2012-02-06 23:37:24Z hamannj $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -56,6 +56,8 @@ static int compare_plots(
 /* implimentation of functions                                              */
 /****************************************************************************/
 
+/* this function examines the plants data and creates, in memory, an		*/
+/* array of PLOT_RECORDS													*/
 struct PLOT_RECORD *build_plot_array_from_plants( 
     unsigned long       *return_code,
     unsigned long       n_records, 
@@ -310,10 +312,6 @@ void get_plant_indecies_for_plot(
 
     /* since end_idx is an unsigned long it is possible that the    */
     /* value can overflow and this should be fixed!                 */
-
-    //if( *end_idx > *start_idx )
-    //{
-
     if( *start_idx + (*n_plant_records_on_plot) > 0 )
     {
         *end_idx = *start_idx + (*n_plant_records_on_plot) - 1;
@@ -435,7 +433,6 @@ void reduce_pct_cover(
     unsigned long           *return_code,
     double                  target_pct,
     double                  current_pct,
-//    const char              *target_sp,
     unsigned long           target_sp, 
     unsigned long           n_plants, 
     unsigned long           n_plots,
@@ -468,9 +465,6 @@ void reduce_pct_cover(
         /* you've found a entry that matches the species    */
         /* so reduce the expf and recalc the pct_cover      */
         /* pct_cover value for the record                   */
-        //if( strcmp( plant_ptr->sp_code, target_sp ) == 0 )
-        //if( strcmp( species_ptr[plant_ptr->sp_idx].sp_code, target_sp ) == 0 )
-        
         if( plant_ptr->sp_idx == target_sp )
         {
             plot_ptr   = &plots_ptr[0];
@@ -488,7 +482,6 @@ void reduce_pct_cover(
 
             if( ending_cov < current_pct && ending_cov >= 0.0 && current_pct >= 0.0)
             {
-                //plant_ptr->expf *= (  ending_cov / plot_cover );
                 plant_ptr->expf *= (ending_cov / current_pct);
             }
         }

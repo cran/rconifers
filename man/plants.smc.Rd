@@ -21,8 +21,10 @@ The \code{plants} \code{\link{data.frame}} has 60 rows and 9 columns.
   
   \describe{
     \item{plot}{The plot identifier.}
-    \item{sp.code}{Species code (See \code{\link{swo}} or
-    \code{\link{smc}} for species maps)}
+    % \item{sp.code}{species code (See \code{\link{species.swo}},
+    % \code{\link{species.smc}}, \code{\link{species.cips}}, or \code{\link{species.swohybrid}})}
+    \item{sp.code}{species code (See \code{\link{species.swo}},
+    \code{\link{species.smc}}, or \code{\link{species.swohybrid}})}
     \item{d6}{Diameter at 6 inches above soil interface.}
     \item{dbh}{Diameter at breast height, in inches.}
     \item{tht}{Total height of the stem, in feet.}
@@ -52,19 +54,56 @@ Ritchie, M.W. 2008. User's Guide and Help System for CONIFERS: A Simulator for Y
 \author{Jeff D. Hamann \email{jeff.hamann@forestinformatics.com},\cr
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
-\seealso{    \code{\link{calc.max.sdi}},
-	     \code{\link{impute}},
-	     \code{\link{plants.swo}},
-	     \code{\link{plots.swo}}
-	     \code{\link{plants.smc}},
- 	     \code{\link{smc}},
-	     \code{\link{swo}}
+
+\seealso{
+  \code{\link{calc.max.sdi}},
+  \code{\link{impute}},
+  % \code{\link{plants.cips}},
+  \code{\link{plants.smc}},
+  \code{\link{plants.swo}},
+  \code{\link{plants.swohybrid}},
+  \code{\link{plot.sample.data}},
+  % \code{\link{plots.cips}},
+  \code{\link{plots.smc}},
+  \code{\link{plots.swo}},
+  \code{\link{plots.swohybrid}},
+  \code{\link{print.sample.data}},
+  \code{\link{project}},
+  \code{\link{rand.seed}},
+  \code{\link{rconifers}},
+  \code{\link{sample.data}},
+  \code{\link{set.species.map}},
+  \code{\link{set.variant}},
+  % \code{\link{species.cips}},
+  \code{\link{species.smc}},
+  \code{\link{species.swo}},
+  \code{\link{species.swohybrid}},
+  \code{\link{sp.sums}},
+  \code{\link{summary.sample.data}},
+  \code{\link{thin}},
+  \code{\link{variants}}
 }
 
 \examples{
+
+## set the number of digits for the output to five (5)
+options(digits=5)
+
+## load the rconifers library
 library( rconifers )
-data(plants.smc)
+
+## set the variant to the CIPS variant.
+set.variant( 1 )
+
+## load and set the species mapping
+data( species.smc )
+print( species.smc )
+set.species.map( species.smc )
+
+## load and display the plants
+data( plants.smc )
 print( plants.smc )
+
 }
 
 \keyword{datasets}

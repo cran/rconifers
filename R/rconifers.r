@@ -1,5 +1,5 @@
 ###
-###	$Id: rconifers.r 669 2010-10-25 19:53:44Z hamannj $	
+###	$Id: rconifers.r 861 2012-02-22 21:25:32Z hamannj $	
 ###
 ###            R interface package for conifers growth model
 ###
@@ -66,7 +66,44 @@
 ## to do this all at once,
 ## $ ftp
 
-.First.lib <-
+## i need an .onAttach() function here for startup code.
+
+## message("ABC", "DEF")
+## suppressMessages(message("ABC"))
+     
+## testit <- function() {
+##   message("testing package startup messages")
+##   packageStartupMessage("initializing ...", appendLF = FALSE)
+##   Sys.sleep(1)
+##   packageStartupMessage(" done")
+## }
+
+## testit()
+## suppressPackageStartupMessages(testit())
+## suppressMessages(testit())
+
+
+## startupMessage <- function() {
+## }
+
+ ## When the package is attached (via ‘library’), the hook function
+ ##     ‘.onAttach’ is looked for and if found is called after the
+ ##     exported functions are attached and before the package
+ ##     environment is sealed.  This is less likely to be useful than
+ ##     ‘.onLoad’, which should be seen as the analogue of
+ ##     ‘.First.lib’ (which is only used for packages without a name
+ ##     space).
+
+
+## .onAttach <- 
+##   function(lib, pkg)
+## {
+## }
+
+
+
+##.First.lib <-
+.onAttach <-
   function(lib, pkg)
 {
   ## this package doesn't need any additional package...
@@ -81,13 +118,13 @@
 ###         stop("Package ts is needed.  Stopping")
     
   mylib <- dirname(.path.package("rconifers"))
-  ver <- packageDescription("rconifers", lib = mylib)["Version"]
+  ver <- packageDescription("rconifers", lib.loc = mylib)["Version"]
 
   vertxt <- paste("\n`rconifers' version:", ver, "\n")
 
   introtxt <-
-    paste("\n`rconfiers' is a package that provides an alternative interface\n",
-          "to the CONIFERS forest growth model.\n\n",
+    paste("\n`rconfiers' is a package that provides an R interface\n",
+          "to the CONIFERS forest growth model software.\n\n",
           "For more information about the CONIFERS forest growth model,\n",
           "paste this url into your web browser:\n",
           "http://www.fs.fed.us/psw/programs/ecology_of_western_forests/projects/conifers/\n\n",
@@ -97,65 +134,62 @@
           "management decisions.\n\n",
           "The output can be used in standard graphics, file input and output,\n",
           "and data analysis functions using R.\n\n",
-          "Jeff D. Hamann, Forest Informatics, Inc. and \n",
-          "Martin W. Ritchie, USFS PSW Research Station, Redding  Silviculture Lab\n\n",
+          "Jeff D. Hamann, Forest Informatics, Inc.,\n",
+          "Martin W. Ritchie, USFS PSW Research Station, Redding Silviculture Lab, and\n",
+          ##"Doug Maguire, Oregon State University, Corvallis, Oregon\n\n",
           "See `library (help=rconifers)' for details.\n\n",
           sep = "")
 
-  if(interactive() || getOption("verbose")) {
-    cat(paste(vertxt, introtxt))
-  }
+  ## if(interactive() || getOption("verbose")) {
+  ##   cat(paste(vertxt, introtxt))
+  ## }
+
+  packageStartupMessage( paste(vertxt, introtxt) )
   
   if( .Call( "r_set_variant", 0, PACKAGE="rconifers" ) ) {
     stop("Rconifers Error: Package could not be loaded. Could not load default coefficients. Stopping...")
   }
+
   
   ## set the species mappings
-  data( swo )
-  sp.map <- list(idx=swo$idx,
-                 fsp=swo$fsp,
-                 code=as.character(swo$code),
-                 em=swo$endemic.mort,
-                 msdi=swo$max.sdi,
-                 b=swo$browse.damage,
-                 m=swo$mechanical.damage,
-                 gwh=swo$genetic.worth.h,
-                 gwd=swo$genetic.worth.d)
+  data( species.swo )
+  sp.map <- list(idx=species.swo$idx,
+                 fsp=species.swo$fsp,
+                 code=as.character(species.swo$code),
+                 em=species.swo$endemic.mort,
+                 msdi=species.swo$max.sdi,
+                 b=species.swo$browse.damage,
+                 m=species.swo$mechanical.damage,
+                 gwh=species.swo$genetic.worth.h,
+                 gwd=species.swo$genetic.worth.d,
+
+                 ## all variants will need to include these variables now.
+                 mint=species.swo$min.temp,
+                 maxt=species.swo$max.temp,
+                 optt=species.swo$opt.temp
+                 )
 
   if( !.Call( "r_set_species_map", sp.map, verbose=FALSE,PACKAGE="rconifers" ) ) {
     stop("Rconifers Error: Package could not be loaded. Could not load swo species map. Stopping...")
   } else {
     introtxt <- paste("\nInitialized species map using data(swo)\nType help.start() for documentation\n", sep = "")
-    if(interactive() || getOption("verbose")) {
-      cat( introtxt)
-    }
+
+    packageStartupMessage( introtxt )
+
+    ## if(interactive() || getOption("verbose")) {
+    ##   cat( introtxt)
+    ## }
+
   }  
   
   ## do I register my routines here?
 
 }
 
-## doesn't appear to be getting called in "R CMD check" 
-## .Last.lib <- function( lib ) {
-##   .Call( "exit_conifers", PACKAGE="rconifers" )
-##   library.dynam.unload( "rconifers" )  
-## }
-
 .Last.lib <- function( lib ) {
  .Call( "exit_conifers", PACKAGE="rconifers" )
  library.dynam.unload( "rconifers" , lib)  
 }
-
-
-## > detach("package:rconifers", unload = TRUE)
-## freeing the species array
-## freeing the coefficients array
-## Error in .Last.lib(libpath) : could not find function "library.unload"
-## Warning message:
-## rconifers namespace cannot be unloaded
-## package 'rconifers' does not have a name space 
-## > 
-
 
 
 rand.seed <- function( control ) {
@@ -164,49 +198,9 @@ rand.seed <- function( control ) {
 }
 
 
-## this function will set the species codes (internal)
-## set.species.map <- function( variant ) {
-
-## ## default is variant 0, SWO
-##     data(swo)
-##     sp.map <- list(idx=swo$idx,
-##                  fsp=swo$fsp,
-##                  code=as.character(swo$code),
-##                  em=swo$endemic.mort,
-##                  msdi=swo$max.sdi,
-##                  b=swo$browse.damage,
-##                  m=swo$mechanical.damage,
-##                  gwh=swo$genetic.worth.h,
-##                  gwd=swo$genetic.worth.d)
-##   if (!variant==1 && !variant==0){
-##     stop( "Rconifers Error: Variant number invalid, default SWO map set." )
-##     return
-##   }
-
-##     ## otherwise, variant 1, SMC
-##   if(variant == 1){
-##     data(smc)
-##     sp.map <- list(idx=smc$idx,
-##                  fsp=smc$fsp,
-##                  code=as.character(smc$code),
-##                  em=smc$endemic.mort,
-##                  msdi=smc$max.sdi,
-##                  b=smc$browse.damage,
-##                  m=smc$mechanical.damage,
-##                  gwh=smc$genetic.worth.h,
-##                  gwd=smc$genetic.worth.d)}
-
-##   ## verify the lengths match
-##   if( length( sp.map$idx ) != length( sp.map$fsp ) ) {
-##     stop( "Rconifers Error: The lengths of the index and functional species vectors do not match." )
-##     return
-##   }
-##   val <- .Call( "r_set_species_map", sp.map, verbose=FALSE, PACKAGE="rconifers" )
-##   ## no need to return the number of species assigned
-## }
 
 ## this function will set the species codes (internal)
-## sp.map is a list?
+## sp.map is a list
 set.species.map <- function( x, verbose=FALSE ) {
 
   if( class( x ) != "data.frame" ) {
@@ -222,7 +216,14 @@ set.species.map <- function( x, verbose=FALSE ) {
                  b=x$browse.damage,
                  m=x$mechanical.damage,
                  gwh=x$genetic.worth.h,
-                 gwd=x$genetic.worth.d)
+                 gwd=x$genetic.worth.d,
+
+                 ## added for the swo-hybrid variant
+                 mint=x$min.temp,
+                 maxt=x$max.temp,
+                 optt=x$opt.temp
+
+                 )
   
   ## verify the lengths match
   if( length( x$idx ) != length( x$fsp ) ) {
@@ -237,6 +238,27 @@ set.species.map <- function( x, verbose=FALSE ) {
 
 set.variant <- function( var=0 ).Call( "r_set_variant", var, PACKAGE="rconifers" )
 
+## temp hack to simply list the variants numbers and labels.
+variants <- function() {
+
+    ## print( "0=CONIFERS_SWO" )
+    ## print( "1=CONIFERS_SMC" )
+    ## print( "2=CONIFERS_SWOHYBRID" )
+    ## print( "3=CONIFERS_CIPS" )
+
+print( "#define CONIFERS_SWO            0" )
+print( "#define CONIFERS_SMC            1" )
+print( "#define CONIFERS_SWOHYBRID      2" )
+##print( "#define CONIFERS_CIPS           3" )
+    
+}
+
+## todo: this code needs to be cleaned up so that users only need
+## supply the function with the string label (e.g. set.variant( "conifers_swo" ) )
+## set.variant <- function( var=0 ).Call( "r_set_variant", var, PACKAGE="rconifers" )
+## and maybe that'l have to come from a variants data.frame data set?
+
+
 ## this function, which is used internally, to convert data from the c code
 build.sample.data <- function( x ) {
 
@@ -245,15 +267,57 @@ build.sample.data <- function( x ) {
   ret.val$x0 <- x[[1]]
   ret.val$age <- x[[2]]
 
-  plots <-   as.data.frame( cbind( plot=x[[3]][[1]] ,
-                                  elevation=x[[3]][[2]],
-                                  slope=x[[3]][[3]],
-                                  aspect=x[[3]][[4]],
-                                  whc=x[[3]][[5]],
-                                  map=x[[3]][[6]],
-                                  si30=x[[3]][[7]]
+  ## construct a data.frame for the plots
+
+  ## todo: update the variables that get passed.
+  plots <-   as.data.frame( cbind( plot=x[[3]][[1]],
+
+                                  ## agh. must include latitude and longitude.
+                                  lat=x[[3]][[2]],
+                                  lon=x[[3]][[3]],
+                                  
+                                  elevation=x[[3]][[4]],
+                                  slope=x[[3]][[5]],
+                                  aspect=x[[3]][[6]],
+                                  whc=x[[3]][[7]],
+                                  map=x[[3]][[8]],
+                                  si30=x[[3]][[9]],
+                                  
+                                  ## put the other plot data in here.
+                                  gsp=x[[3]][[10]],
+
+                                  ## include the mean monthly temps
+                                  mt1=x[[3]][[11]],
+                                  mt2=x[[3]][[12]],
+                                  mt3=x[[3]][[13]],
+                                  mt4=x[[3]][[14]],
+                                  mt5=x[[3]][[15]],
+                                  mt6=x[[3]][[16]],
+                                  mt7=x[[3]][[17]],
+                                  mt8=x[[3]][[18]],
+                                  mt9=x[[3]][[19]],
+                                  mt10=x[[3]][[20]],
+                                  mt11=x[[3]][[21]],
+                                  mt12=x[[3]][[22]],
+
+                                  ## include the mean monthly temps
+                                  srad1=x[[3]][[23]],
+                                  srad2=x[[3]][[24]],
+                                  srad3=x[[3]][[25]],
+                                  srad4=x[[3]][[26]],
+                                  srad5=x[[3]][[27]],
+                                  srad6=x[[3]][[28]],
+                                  srad7=x[[3]][[29]],
+                                  srad8=x[[3]][[30]],
+                                  srad9=x[[3]][[31]],
+                                  srad10=x[[3]][[32]],
+                                  srad11=x[[3]][[33]],
+                                  srad12=x[[3]][[34]]
+
                                   )
                            )
+
+  ## construct a data.frame for the plants
   plants <-   as.data.frame( cbind( plot=x[[4]][[1]] ,
                                    sp.code=x[[4]][[2]],
                                    d6=x[[4]][[3]],
@@ -266,7 +330,10 @@ build.sample.data <- function( x ) {
                                    errors=x[[4]][[10]]
                                    )
                             )
-#inserted the following line on 12/11/2009 to try and fix plot assignment
+
+  ret.val$n.years.projected <- x[[5]]
+
+  ## inserted the following line on 12/11/2009 to try and fix plot assignment
   plants$plot<- as.numeric( levels( plants$plot) )[plants$plot]
   plants$d6 <- as.numeric( levels( plants$d6 ) )[plants$d6]
   plants$dbh <- as.numeric( levels( plants$dbh ) )[plants$dbh]
@@ -297,17 +364,22 @@ project <- function( x,
                       genetic.gains=0) )
 {
 
+  ## make sure the class of the object pass into the function is a "sample.data" object
   if( class( x ) != "sample.data" ) {
     stop( "Rconifers Error: x is not a sample.data object." )
     return
   }
   
+  ## make sure the plant level variables are available
+  ## todo: this might have to be modified for each variant
   if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
     {
     stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
     return
   }
 
+  ## make sure the plot level variables are available
+  ## todo: this might have to be modified for each variant
   if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
     {
       stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
@@ -381,7 +453,7 @@ impute <- function( x,
     }
      
   x$plants$sp.code <- as.character( x$plants$sp.code )
-  val <- build.sample.data( .Call( "r_fill_in_missing_values",
+  val <- build.sample.data( .Call( "r_impute_missing_values",
                                   x,
                                   control,
                                   PACKAGE="rconifers" ) )
@@ -445,7 +517,7 @@ print.sample.data <- function( x, digits = max( 3, getOption("digits") - 1 ),...
   cat( "sample contains", nrow(x$plots), "plots records\n" )
   cat( "sample contains", nrow(x$plants), "plant records\n" )
 
-  ##cat( "years projected = ", x$prj.yrs, "\n")
+  cat( "n.years.projected = ", x$n.years.projected, "\n")
   cat( "age = ", x$age, "\n")
   cat( "x0 = ", x$x0, "\n")
   cat( "max sdi = ", calc.max.sdi( x ), "\n")
@@ -524,5 +596,61 @@ sp.sums <- function( x ) {
 }
 
 
+## todo: this needs a manual page
+## this function generates a simple set of charts to visually represent the data
+plot.sample.data <- function( x, digits = max( 3, getOption("digits") - 1 ),... ) {
+
+    if( class( x ) != "sample.data" ) {
+    stop( "Rconifers Error: x is not a sample.data object." )
+    return
+  }
+
+    if( sum( names(  x$plants ) %in% c("plot","sp.code","d6","dbh","tht","cr","n.stems","expf","crown.width" ) ) != 9 )
+      {
+        stop( "Rconifers Error: the plant list data.frame does not have all the required columns. See impute help (?impute)" )
+        return
+      }
+    
+    if( sum( names(  x$plots ) %in% c("plot","elevation","slope","aspect","whc","map","si30" ) ) != 7 )
+      {
+        stop( "Rconifers Error: the plot data.frame does not have all the required columns. See impute help (?impute)" )
+        return
+      }
+    
+    save.digits <- unlist(options(digits=digits))
+    on.exit(options(digits=save.digits))
+
+
+    ## generate a plot of the species summaries
+    opar <- par(mfrow=c(2,2))
+    
+    ## plot the diameter histogram
+    hist( x$plants$dbh, main="Diameter Distribution", xlab="DBH, in Inches" )
+    
+    ## plot the height histogram
+    hist( x$plants$tht, main="Height Distribution", xlab="Total Height, in Feet" )
+
+    ## plot the ht vs. dbh plot
+    plot( x$plants$tht ~ x$plants$dbh,
+         ylab="Total Height, in Feet",
+         xlab="Diameter at Breast Height, in Inches",     
+         main="Height vs. Diameter" )
+    grid()
+
+    ## generate a pie chart of the basal area, if there is any
+    ba <- sp.sums( x )$ba
+    if( sum( ba ) > 0 ) {
+      names(ba) <- rownames( sp.sums( x ) )
+      pie( ba[ba>0], main="Basal Area" )
+    }
+
+    ## close out the plot.
+    par(opar)
+    
+    invisible( x )
+  }
+
+
+## you might want to put the metric conversion function in the C code and put a wrapper here.
 
 

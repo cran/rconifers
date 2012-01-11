@@ -54,13 +54,41 @@ Ritchie, M.W. 2008 . User's Guide and Help System for CONIFERS: A Simulator for 
 	     Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
 
-\seealso{\code{\link{impute}},
-	     \code{\link{sample.data}},
-	     \code{\link{set.species.map}}
+\seealso{
+  \code{\link{calc.max.sdi}},
+  \code{\link{impute}},
+  % \code{\link{plants.cips}},
+  \code{\link{plants.smc}},
+  \code{\link{plants.swo}},
+  \code{\link{plants.swohybrid}},
+  \code{\link{plot.sample.data}},
+  % \code{\link{plots.cips}},
+  \code{\link{plots.smc}},
+  \code{\link{plots.swo}},
+  \code{\link{plots.swohybrid}},
+  \code{\link{print.sample.data}},
+  \code{\link{project}},
+  \code{\link{rand.seed}},
+  \code{\link{rconifers}},
+  \code{\link{sample.data}},
+  \code{\link{set.species.map}},
+  \code{\link{set.variant}},
+  % \code{\link{species.cips}},
+  \code{\link{species.smc}},
+  \code{\link{species.swo}},
+  \code{\link{species.swohybrid}},
+  \code{\link{sp.sums}},
+  \code{\link{summary.sample.data}},
+  \code{\link{thin}},
+  \code{\link{variants}}
 }
 
 
 \examples{
+
+## set the number of digits for the output to five (5)
+options(digits=5)
+
 library( rconifers )
 
 # turn off the random error component

@@ -1,31 +1,29 @@
 
 
 \keyword{datasets}
-\name{plots.swo}
-\alias{plots.swo}
+\name{plots.swohybrid}
+\alias{plots.swohybrid}
 \non_function{}
-\title{Example plots data set for SWO Variant of the CONIFERS growth model}
-\usage{data(plots.swo)}
+\title{Example plots data set for SWO-Hybrid Variant of the CONIFERS growth model}
+\usage{data(plots.swohybrid)}
 
 \description{
-This a simple plot file \code{\link{data.frame}} that contains basic plot attributes used in the CONIFERS growth model, corresponding to the plants.swo dataframe.
+This a simple plot file \code{\link{data.frame}} that contains basic plot attributes used in the CONIFERS growth model, corresponding to the plants.swohybrid dataframe.
 
-The \code{plots.swo} data frame has 4 rows and 6 columns.
+The \code{plots.swohybrid} data frame has 4 rows and 6 columns.
 }
 
 \format{
 This data frame contains the following columns:
 \describe{
   \item{plot}{A numeric plot identifier.}
-
   \item{lat}{Latitude, in decimal degrees, of the plot.}
   \item{lon}{Longitude, in decimal degrees, of the plot.}
-
   \item{elevation}{Plot elevation, in feet.}
   \item{slope}{Plot slope, in percent.}
   \item{aspect}{Plot aspect, in degrees from North.}
   \item{whc}{Water holding capacity of the plot, in inches.}
-  \item{map}{Mean annual precipitation, in inches.}
+  \item{map}{Mean annual precipitation, in inches, for the growing season which includes only April, May, and June.}
 
   %% growing season precip.
   %% check the preciup
@@ -132,28 +130,28 @@ options(digits=5)
 ## load the rconifers library
 library( rconifers )
 
-## set the variant to the SWO variant.
-set.variant( 0 )
+## set the variant to the SWOHYBRID variant.
+set.variant( 2 )
 
 ## load and set the species mapping
-data( species.swo )
-print( species.swo )
-set.species.map( species.swo )
+data( species.swohybrid )
+print( species.swohybrid )
+set.species.map( species.swohybrid )
 
 ## load and display the plant data
-data( plants.swo )
-print( plants.swo )
+data( plants.swohybrid )
+print( plants.swohybrid )
 
 ## load and display the plot data
-data( plots.swo )
-print( plots.swo )
+data( plots.swohybrid )
+print( plots.swohybrid )
 
 ## create the sample.data list object
-sample.swo <- list( plots=plots.swo, plants=plants.swo, age=3, x0=0.0, n.years.projected=0 )
-class(sample.swo)  <- "sample.data"
+sample.swohybrid <- list( plots=plots.swohybrid, plants=plants.swohybrid, age=3, x0=0.0, n.years.projected=0 )
+class(sample.swohybrid)  <- "sample.data"
 
 ## print and plot the sample
-print( sample.swo )
-plot( sample.swo )
+print( sample.swohybrid )
+plot( sample.swohybrid )
 
 }

@@ -1,5 +1,5 @@
 
-% 	$Id: $	
+% 	$Id: rconifers-internal.Rd 850 2012-01-11 21:30:38Z hamannj $	
 
 \name{rconifers-internal}
 \alias{build.sample.data}
@@ -46,17 +46,6 @@ Ritchie, M.W. 2008 . User's Guide and Help System for CONIFERS: A Simulator for 
 
 \author{Jeff D. Hamann \email{jeff.hamann@forestinformatics.com} and Martin W. Ritchie \email{mritchie@fs.fed.us} }
 
-\seealso{    \code{\link{calc.max.sdi}},
-	     \code{\link{impute}},
-	     \code{\link{project}},
-	     \code{\link{set.species.map}},		  
- 	     \code{\link{smc}}, 
- 	     \code{\link{sp.sums}}, 	     
- 	     \code{\link{summary.sample.data}},
-	     \code{\link{swo}}, 
-	     \code{\link{smc}},
-	     \code{\link{thin}}
-}
 
 
 

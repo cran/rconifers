@@ -5,7 +5,7 @@
 /*                                                                          */
 /****************************************************************************/
                                                                                 
-/* 	$Id: conifers.h 671 2010-10-25 21:45:34Z mritchie $	 */
+/* 	$Id: conifers.h 861 2012-02-22 21:25:32Z hamannj $	 */
 
 #ifndef __CONIFERS_H__
 #define __CONIFERS_H__
@@ -30,26 +30,43 @@ extern "C" {
 #define	AIT_BIN_RES         0.10        /* single array for bal/cat         */
 #define	AIT_SIZE            750         /* single array for bal/cat         */
 
-#define FC_I        5.454153912482e-3   /*  forestry constant imperial            */
-#define FC_M	    7.85398163398e-5    /*  forestry constnt metric               */ 
-#define MY_PI       3.14159265359       /*                                        */    
-#define ONE_OVER_PI 0.318309886184      /*                                        */   
-#define DEG2RAD     1.74532925199e-2    /*  degrees to radians                    */   
+#ifndef FALSE                           /* if FALSE is not already defined  */
+#define FALSE               0
+#endif
 
-#define FT2CM    30.48000		/*  feet to centimeters                   */
-#define FT2M     0.304800               /*  feet to meters                        */
-#define GRM2LB   0.0022046226           /*  grams to pounds                       */
-#define KG2LB    2.2046226              /*  kilograms to pounds                   */
-#define LB2TON   0.00050                /*  pounds to tons                        */
-#define IN2CM    2.54000		/*  inches to centimeters                 */
+#ifndef TRUE                            /* if TRUE is not already defined   */
+#define TRUE                1
+#endif
 
-#define REINEKE_B1  1.605               /*  Reineke's constant                    */   
-#define REINEKE_B1A 1.77                /*  Modified by Oliver et al.             */   
-#define CRITICAL_RD 0.600               /*  threshold imminent sdi mort NEVER==1  */   
-#define CCF_CONST_I 0.00180302608677    /*  PI / 4.0 / 43560.0 * 100.0            */   
-#define SQ_FT_PER_ACRE      43560.0     /*  Square feet per acre                  */   
-#define CURRENT_COEFFS_VER  4.13        /*  current version num for coeffs        */
-#define MODEL_VERSION       4.13        /* model (equations) version              */
+#define FC_I        5.454153912482e-3   /*  forestry constant imperial      */
+#define FC_M	    7.85398163398e-5    /*  forestry constnt metric         */ 
+#define MY_PI       3.14159265359       /*                                  */    
+#define ONE_OVER_PI 0.318309886184      /*                                  */   
+#define DEG2RAD     1.74532925199e-2    /*  degrees to radians              */   
+
+#define FT2CM    30.48000		/*  feet to centimeters                     */
+#define CM2FT    1.0/FT2CM		/*  centimeters to feet		*/
+
+#define FT2M     0.304800               /*  feet to meters                  */
+#define GRM2LB   0.0022046226           /*  grams to pounds                 */
+#define KG2LB    2.2046226              /*  kilograms to pounds             */
+#define LB2TON   0.00050                /*  pounds to tons                  */
+#define IN2CM    2.54000				/*  inches to centimeters			*/
+#define IN2MM    25.4000				/*  inches to millimeters           */
+#define MM2IN	  1.0/IN2MM			/*  millimeters to inches               */
+#define FTAC2M2HA 0.229567493114			/* ft^2/acre to m^2/ha			*/
+#define M2HA2FTAC 1.0/FTAC2MHA		/* ft^2/acre to m^2/ha				    */
+
+
+#define REINEKE_B1  1.605               /*  Reineke's constant              */   
+#define REINEKE_B1A 1.77                /*  Modified by Oliver et al.       */   
+#define CRITICAL_RD 0.600               /*  threshold imminent sdi mort     */   
+#define CCF_CONST_I 0.00180302608677    /*  PI / 4.0 / 43560.0 * 100.0      */   
+#define SQ_FT_PER_ACRE      43560.0     /*  Square feet per acre            */   
+
+/* todo: these varlues need to move into the coeffs */
+//#define CURRENT_COEFFS_VER  4.14        /*  current version num for coeffs  */
+//#define MODEL_VERSION       4.14        /* model (equations) version        */
 
 /* error constants          */
 #define CONIFERS_SUCCESS        0       
@@ -71,8 +88,8 @@ extern "C" {
 #define CORRUPTED_ARCHIVE       16  /*  MOD051 bad systum-1 archive file        */
 #define INVALID_PLANT_COUNT     17  /*  MOD068 */
 #define INVALID_PLOT_COUNT      18  /*  MOD068 */
-#define INVALID_BIN_COEFFS_FILE 19  /*  MODXXX */
-#define INVALID_VARIANT		20  
+#define INVALID_BIN_COEFFS_FILE 19  
+#define INVALID_VARIANT		    20  
 #define INVALID_PLANT_TYPE      21
 #define FAILED_MEMORY_ALLOC     22
 #define FAILED_PROJECT_PLANT    23
@@ -82,7 +99,7 @@ extern "C" {
 #define FILL_VALUES_ERROR       27
 
 
-/* plant record error constants */
+/* plant record error constants (hex values)            */
 #define E_OKDOKEY                 0x00000000  /*    0 */
 #define E_INVALID_SPECIES         0x00000001  /*    1 */
 #define E_INVALID_DBH             0x00000002  /*    2 */
@@ -111,7 +128,7 @@ extern "C" {
 #define SHRUB_CONTROL_ACTIVITY      2
 
 /* added for conifers 3.0   */
-#define CONIFER			0
+#define CONIFER					0
 #define HARDWOOD                1
 #define SHRUB                   2
 #define FORB                    3
@@ -119,8 +136,30 @@ extern "C" {
 #define PLANT_TYPES             5
 
 /* variants added for conifers 4.0 */
+/* todo: step #1 - add new variant #define here */
 #define CONIFERS_SWO            0
 #define CONIFERS_SMC            1
+#define CONIFERS_SWOHYBRID      2
+#define CONIFERS_CIPS           3
+// #define N_VARIANTS              (CONIFERS_CIPS+1)
+
+/*
+variant_id,
+coeffs_version, 
+model_version,
+citation,
+*/
+
+
+/* We might need a structure to hold the contents   */
+/* of the simulator variant                         */
+/* possible data required might include             */
+/* id, name, metric/imperial, n_species             */
+
+/* todo: step #2 - create new coeffs_[VARIANT].c file, enter, and verify the coefficients */
+/* todo: step #3 - create new model_[VARIANT].c file, code, and verify the functions  */
+
+
 
 
 /****************************************************************************/
@@ -160,6 +199,18 @@ extern "C" {
 	 double         cfvolume4[MAX_COEFFS];        /*  S12 volume coefficients         */
 	 double         biomass[MAX_COEFFS];          /*  S13 biomass coefficients        */
 	 double         cw_growth[MAX_COEFFS];          /*  d6 cw_growth coefficients        */
+   
+	 /* coefficients added for the CIPS variant */
+	 /* todo: you need to add the spaces in the older models' coeffs too */
+	 double			dbh_ht_veg_cov[MAX_COEFFS];	
+	 double			d6_ht_veg_cov[MAX_COEFFS];	
+	 double			d12_ht_veg_cov[MAX_COEFFS];
+     double         mortality[MAX_COEFFS];
+
+	 /* add new coefficients here */
+     /* make sure you include the copy in the variant specific files */
+
+   
    };
 
 
@@ -178,13 +229,20 @@ extern "C" {
       char           fvs_sp_code[FVS_SP_LENGTH];     /*  used to translate to fvs        */
       
       /*  mortality coefficients          */
-      double		endemic_mortality;        /*  times 100     */
+      double		endemic_mortality;			     /*  times 100     */
       double		max_sdi;        
       double		browse_damage;
       double		mechanical_damage;
-	
+
+      /* genetic coeffs here */
       double		genetic_worth_h;
-      double            genetic_worth_d;
+      double		genetic_worth_d;
+
+      /* climate model coeffs	*/
+      double		min_temp;
+      double		max_temp;
+      double		opt_temp;
+      
    };
 
 
@@ -212,11 +270,17 @@ extern "C" {
 	 double         cr_growth;       /*  change in crown ratio           */
 	 double         cw_growth;       /*  change in crown width           */
 	 double         expf_change;     /*  number of trees killed          */
-	 unsigned long  errors;           /*  simple error flag for the tree  */
+	 unsigned long  errors;          /*  simple error flag for the tree  */
 	 double         max_crown_width; /* maximum cw from Paine&Hann       */
-	 /* spares   */
-	 long           INT_SPARE[20];   /*  generic spares, reserved        */
-	 double         DBL_SPARE[20];   /*  generic spares, reserved        */
+
+     /* added for the CIPS model */
+	 double         d12;			 /* diameter at 30 cm				*/
+	 double         d12_growth;		 /* change in diameter at 30 cm		*/
+	 double         d12_area;		 /* area (ft^2) of d12 cross section */
+
+	 /* spares. these are reserved for debugging, new variables, etc.    */
+	 long           INT_SPARE[40];   /*  generic spares, reserved        */
+	 double         DBL_SPARE[40];	 /*  for debugging variants          */
 
    };
 
@@ -256,8 +320,22 @@ extern "C" {
 	 double         ca_s;                   /*  crown area in shrubs            */
 	 double         bait[PLANT_TYPES][AIT_SIZE];  /* basal area in taller       */
 	 double         cait[PLANT_TYPES][AIT_SIZE];  /* crown area in taller       */
-	 long           INT_SPARE[20];          /*  generic spares, reserved        */
-	 double         DBL_SPARE[20];          /*  generic spares, reserved        */
+	 
+
+	 /* variables added for the CONIFERS_CIPS model */
+	 double			d12ba_c;				/* like the d6_area which is the	*/
+											/* basal area for "conifers"		*/
+											/* (aka DF) at 30 cm (15 inches)	*/
+											/* above the ground					*/
+     
+	 /* variables added for the CONIFERS_SWOHYBRID model */
+     double			growing_season_precip;  /* this is not mean annual precip */
+	 double			solar_radiation[12];	/*	solar radiation, MegaJoules/m^2	*/
+	 double			mean_monthly_temp[12];	/*	mean monthly temp in C			*/
+
+	 /* spares. these are reserved for debugging, new variables, etc.    */
+	 long           INT_SPARE[40];   /*  generic spares, reserved        */
+	 double         DBL_SPARE[40];	 /*  for debugging variants          */
 
    };
 
@@ -299,10 +377,14 @@ extern "C" {
 	 double         max_hd6_ratio;          /*  max ht/d6 ratio                 */
 	 double         height_40;              /*                                  */
 	 double         con_tpa;                /*  conifers trees per acre         */
-	 /* spares   */
-	 long           INT_SPARE[20];          /*  generic spares, reserved        */
-	 double         DBL_SPARE[20];          /*  generic spares, reserved        */
+
+     /* spares   */
+	 long           INT_SPARE[40];          /*  generic spares, reserved        */
+	 double         DBL_SPARE[40];          /*  generic spares, reserved        */
+
+
    };
+
 
 
 
@@ -312,20 +394,37 @@ extern "C" {
 
 
 /****************************************************************************/
-/* functions in coeffs.c                                                  */
+/* functions in coeffs_mgt.c                                                */
 /****************************************************************************/
-   struct COEFFS_RECORD *con_init_coeffs( 
-      unsigned long			version,
-      unsigned long			*n_coeffs,
-      double                *coeffs_version );
+struct COEFFS_RECORD *con_init_coeffs( 
+	unsigned long				version,
+	unsigned long				*n_coeffs,
+    double                      *coeffs_version,
+    double                      *model_version );
 
    struct COEFFS_RECORD *con_swo_init_coeffs( 
       unsigned long         *n_coeffs, 
-      double                *coeffs_version );
+    double                      *coeffs_version,
+    double                      *model_version );
 
    struct COEFFS_RECORD *con_smc_init_coeffs( 
       unsigned long         *n_coeffs, 
-      double                *coeffs_version );
+    double                      *coeffs_version,
+    double                      *model_version );
+
+   struct COEFFS_RECORD *con_cips_init_coeffs( 
+      unsigned long         *n_coeffs, 
+    double                      *coeffs_version,
+    double                      *model_version );
+
+struct COEFFS_RECORD *con_swo_hybrid_init_coeffs( 
+   unsigned long               *n_coeffs, 
+    double                      *coeffs_version,
+    double                      *model_version );
+
+/* todo: make sure you include the function declarations for the init_coeffs */
+/* functions here */
+
 
 /****************************************************************************/
 /* functions in conifers.c                                                  */
@@ -334,6 +433,9 @@ extern "C" {
       struct COEFFS_RECORD *c_ptr );
    
    unsigned long __stdcall is_shrub( 
+      struct COEFFS_RECORD *c_ptr );
+
+   unsigned long __stdcall is_forb( 
       struct COEFFS_RECORD *c_ptr );
 
    unsigned long __stdcall is_non_stocked( 
@@ -382,7 +484,8 @@ extern "C" {
 
    void __stdcall dump_plants_to_file( 
       unsigned long			  *return_code,
-      const char			  *filename,
+    const char          *filename,
+//    FILE                *fp,
       unsigned long			  n_plants,
       struct PLANT_RECORD	  *plants_ptr,
       unsigned long			  n_species,
@@ -402,6 +505,14 @@ extern "C" {
       const char				*filename, 
       unsigned long			*n_points,
       struct PLOT_RECORD		**plots_ptr );
+
+   void read_plants_from_file( 
+	unsigned long			*return_code,
+    const char				*filename, 
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+    unsigned long			*n_plants,
+	struct PLANT_RECORD		**plants_ptr );
 
    void __stdcall read_sample_from_file( 
       unsigned long			*return_code,
@@ -530,13 +641,18 @@ extern "C" {
       struct COEFFS_RECORD    *coeffs_ptr    );
 
 
+    void print_errors_and_warnings(
+        unsigned long           n_plants,
+        struct PLANT_RECORD     *plants_ptr );
+
 
 
 
 /****************************************************************************/
 /* functions in grow.c                                                      */
 /****************************************************************************/
-   void __stdcall project_plant_list( 
+
+void __stdcall project_plant_list( 
       unsigned long           *return_code,
       unsigned long           n_species,
       struct SPECIES_RECORD   *species_ptr,
@@ -553,7 +669,9 @@ extern "C" {
       unsigned long           use_precip_in_hg,       
       unsigned long           use_rand_err,
       unsigned long		      variant,
-      unsigned long		      use_genetic_gains );
+   unsigned long            use_genetic_gains,
+   unsigned long			plantation_age,
+   unsigned long            *n_years_projected );
 
 void get_taller_attribs( 
     double                  height,
@@ -568,324 +686,141 @@ void get_age_cut(
     unsigned long           *genetics_age_cut);
 
 /****************************************************************************/
-/* functions in smc_model.c  swo_model.c                                    */
+/* functions in swo_model.c                                                 */
 /****************************************************************************/
-/* diameter calculations    */
-/* S1 crown width equations */
-   void calc_crown_width( 
-      unsigned long   *return_code,
-      double          d6_area,
-      double          total_height,
-      double          *pred_crown_width,
-      double          *pred_crown_area,
-      double          *coeffs_ptr);
+void swo_impute( 
+	unsigned long           *return_code,
+	unsigned long           n_species,
+	struct SPECIES_RECORD   *species_ptr,
+	unsigned long           n_coeffs,
+	struct COEFFS_RECORD    *coeffs_ptr,
+	unsigned long           variant,
+	unsigned long           n_plants,
+	struct PLANT_RECORD     *plants_ptr,
+	unsigned long           n_points,
+	struct PLOT_RECORD      *plots_ptr,
+	double                  fixed_plot_radius,
+	double                  min_dbh,
+	double                  baf );
 
-/* S2 coefficients: MW */
-   void calc_max_crown_width( 
-      unsigned long   *return_code,
-      double          dbh,
-      double          total_height,
-      double          *pred_max_crown_width,
-      double          *coeffs_ptr);
-
-/* S3 crown ratio calculations */
-   void calc_crown_ratio( 
-      unsigned long   *return_code, 
-      double          total_height,
-      double          d6,
-      double          *pred_cr,
-      double          *coeffs_ptr );
-
-
-/* S4, coefficients: MS     */
-   void calc_d6_from_total_height(       
-      unsigned long   *return_code,
-      double          total_height, 
-      double          *pred_d6,
-      double          *coeffs_ptr );
-
-   void calc_d6_from_ht_and_dbh(       
-      unsigned long   *return_code,
-      double          total_height,
-      double          dbh,
-      double          *pred_d6,
-      double          *coeffs_ptr );
-
-   void calc_dbh_from_height(       
-      unsigned long   *return_code,
-      double          total_height,
-      double          *pred_dbh,
-      double          *coeffs_ptr );
-
-   void calc_dbh_from_height_and_d6(       
-      unsigned long   *return_code,
-      double          d6,
-      double          total_height,
-      double          *pred_dbh,
-      double          *coeffs_ptr );
-
-   void calc_exp_from_cover_and_ca(
-      unsigned long   *return_code,
-      double          pct_cover,
-      double          crown_area,
-      double          *pred_expf);
-
-/* plant height calculations    */
-   void calc_height_from_d6(       
-      unsigned long   *return_code,
-      double          d6,
-      double          *pred_total_height,
-      double          *coeffs_ptr );
-
-   void calc_height_from_dbh(       
-      unsigned long   *return_code,
-      double          dbh,
-      double          *pred_total_height,
-      double          *coeffs_ptr );
-
-   void calc_nstems_from_cw_and_height(
-      unsigned long   *return_code,
-      double          total_height,
-      double          crown_width,
-      long            *pred_n_stems,
-      double          *coeffs_ptr);
-
-   void calc_volume(
-      unsigned long   *return_code,
-      double          total_height,
-      double          dbh,
-      double          *pred_volume,
-      double          *coeffs_ptr);
-
-   void calc_biomass(
-      unsigned long   *return_code,
-      double          total_height,
-      double          basal_diameter,
-      double          crown_width,
-      double		  dbh,
-      double     	  *pred_biomass,
-      double          *coeffs_ptr );
+void swo_project_plant(  
+   unsigned long           *return_code,
+   unsigned long           n_species,
+   struct SPECIES_RECORD   *species_ptr,
+   unsigned long           n_coeffs,
+   struct COEFFS_RECORD    *coeffs_ptr,
+   struct PLANT_RECORD     *plant_ptr,
+   struct PLOT_RECORD      *plot_ptr,
+   unsigned long           endemic_mortality,      
+   int                     hbc_growth_on,          
+   unsigned long           use_precip_in_hg,       
+   unsigned long           use_rand_err );
 
 
-   void calc_height_growth(
-      unsigned long *return_code,	
-      double        total_height, 
-      double        crown_ratio,
-      double        d6_area,
-      double        precip, 
-      double        h20_holding_capacity,
-      double        slope,
-      double        aspect,
-      double        cacon,
-      double        catcon,
-      double        cahw,
-      double        cash,
-      double        cathw,
-      double        catsh,
-      double        basal_d,
-      double        elevation,
-      double        random_norm_0_1,
-      double        random_unif_0_1a,
-      double        random_unif_0_1b,
-      long          ind_random,
-      double        prob_browse,
-      double        prob_top_damage,
-      unsigned long use_precip,     
-      double        *height_growth,
-      double        *coeffs_ptr,
-	  unsigned long plant_type);
+/****************************************************************************/
+/* functions in smc_model.c                                                 */
+/****************************************************************************/
+void smc_impute( 
+	unsigned long           *return_code,
+	unsigned long           n_species,
+	struct SPECIES_RECORD   *species_ptr,
+	unsigned long           n_coeffs,
+	struct COEFFS_RECORD    *coeffs_ptr,
+	unsigned long           variant,
+	unsigned long           n_plants,
+	struct PLANT_RECORD     *plants_ptr,
+	unsigned long           n_points,
+	struct PLOT_RECORD      *plots_ptr,
+	double                  fixed_plot_radius,
+	double                  min_dbh,
+	double                  baf );
 
-   void calc_d6_growth( 
-      unsigned long *return_code,
-      double        height_growth,
-      double        crown_width,
-      double        total_height,
-      double        d6,
-      double        cat_shrubs,
-      double        cat_conifers,
-      double        cat_hardwoods,
-      double        ca_shrubs,
-      double        ca_conifers,
-      double        ca_hardwoods,
-      double        h20_holding_capacity,
-      double        *pred_d6_growth,
-      double        *coeffs_ptr,
-	  unsigned long plant_type);
-
-   void calc_dbh_growth(   
-      unsigned long   *return_code,
-      double          total_height,
-      double          height_growth,
-      double          crown_ratio,
-      double          current_dbh,
-      double          current_d6,
-      double          d6_growth,
-      double          *pred_dbh_growth,
-      double          *coeffs_ptr );
-
-   void calc_cr_growth(
-      unsigned long   *return_code,
-      int             cr_flag,
-      double          total_height,
-      double          height_growth,
-      double          crown_ratio,
-      double          conifer_ca,
-      double          hardwood_ca,
-      double          shrub_ca,
-      double          unif_0_1,
-      double          *cr_growth,
-      double          *coeffs_ptr );
-
-   void calc_cw_growth(   
-      unsigned long     *return_code,
-      double            total_height,
-      double			height_growth,
-      double			crown_width,
-      double			ca_conifers,
-      double			ca_hardwoods,
-      double			ca_shrubs,
-      double			catcon,
-      double		    unif_0_1,
-      double            *pred_cw_growth,
-      double            *coeffs_ptr,
-      unsigned long     plant_type);
-
-void swo_calc_endemic_mortality(   
-      unsigned long   *return_code,
-      double          expansion_factor,
-      double          *pred_mortality,
-      double          *coeffs_ptr );
-
-/*  smc growth functions **************************************************/
-void smc_calc_height_growth(
-    unsigned long   *return_code,	
-    double          total_height, 
-    double          basal_d,
-    double          flew_site,
-    double          con_tpa,
-    double          h40,
-    double          cash,
-	double          catcon,
-    double          cathw,
-    double          catsh,
-    double          random_norm_0_1,
-    double          random_unif_0_1a,
-    double          random_unif_0_1b,
-    long            ind_random,
-    double          prob_browse,
-    double          prob_top_damage,
-
-/*     double          genetic_worth, */
-
-    double	    genetic_worth_h,
-    double          genetic_worth_d,
-
-    unsigned long   use_genetic_gains,
-    double          *height_growth,
-    double          *coeffs_ptr,
-	unsigned long   plant_type,
-    unsigned long   genetics_age_cut);
-
-void smc_calc_dbh_growth(   
-    unsigned long   *return_code,
-    double          total_height,
-    double          h40,
-    double          flew_site,
-    double          current_dbh,
-    double          basal_area,
-    double          contpa,
+void smc_project_plant(  
+   unsigned long           *return_code,
+   unsigned long           n_species,
+   struct SPECIES_RECORD   *species_ptr,
+   unsigned long           n_coeffs,
+   struct COEFFS_RECORD    *coeffs_ptr,
+   struct PLANT_RECORD     *plant_ptr,
+   struct PLOT_RECORD      *plot_ptr,
+   unsigned long           endemic_mortality,      
+   int                     hbc_growth_on,          
+   unsigned long           use_precip_in_hg,       
+   unsigned long           use_rand_err, 
+   struct SUMMARY_RECORD   *before_sums,
+   unsigned long            use_genetic_gains,
+   unsigned long            genetics_age_cut);
 
 
-/*     double          genetic_worth, */
+/****************************************************************************/
+/* functions in cips_model.c                                                */
+/****************************************************************************/
+void cips_impute( 
+	unsigned long           *return_code,
+	unsigned long           n_species,
+	struct SPECIES_RECORD   *species_ptr,
+	unsigned long           n_coeffs,
+	struct COEFFS_RECORD    *coeffs_ptr,
+	unsigned long           variant,
+	unsigned long           n_plants,
+	struct PLANT_RECORD     *plants_ptr,
+	unsigned long           n_points,
+	struct PLOT_RECORD      *plots_ptr,
+	double                  fixed_plot_radius,
+	double                  min_dbh,
+	double                  baf );
 
-    double	    genetic_worth_h,
-    double          genetic_worth_d,
+void cips_project_plant(  
+   unsigned long           *return_code,
+   unsigned long           n_species,
+   struct SPECIES_RECORD   *species_ptr,
+   unsigned long           n_coeffs,
+   struct COEFFS_RECORD    *coeffs_ptr,
+   struct PLANT_RECORD     *plant_ptr,
+   struct PLOT_RECORD      *plot_ptr,
+   unsigned long           endemic_mortality,      
+   int                     hbc_growth_on,          
+   unsigned long           use_precip_in_hg,       
+   unsigned long           use_rand_err, 
+   struct SUMMARY_RECORD   *before_sums,
+   unsigned long            use_genetic_gains,
+   unsigned long            genetics_age_cut,
+   unsigned long			plantation_age,
+   unsigned long            *n_years_projected );
 
-    unsigned long   genetics_age_cut,
-    unsigned long   use_genetics_gain,
-    double          *pred_dbh_growth,
-    double          *coeffs_ptr,
-    unsigned long   plant_type);
 
-void smc_calc_cr_growth(
-    unsigned long   *return_code,
-    int             hcb_growth_on,
-    double          total_height,
-    double          height_growth,
-    double          crown_ratio,
-    double          conifer_ca,
-    double          hardwood_ca,
-    double          shrub_ca,
-    double          uniform_0_1,
-    double          *cr_growth,
-    double          *coeffs_ptr );
+/****************************************************************************/
+/* functions in swo_hybrid_model.c                                          */
+/****************************************************************************/
+void swohybrid_impute( 
+    unsigned long           *return_code,
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+    unsigned long           n_coeffs,
+    struct COEFFS_RECORD    *coeffs_ptr,
+    unsigned long           variant,
+    unsigned long           n_plants,
+    struct PLANT_RECORD     *plants_ptr,
+    unsigned long           n_points,
+    struct PLOT_RECORD      *plots_ptr,
+    double                  fixed_plot_radius,
+    double                  min_dbh,
+    double                  baf );
 
-void smc_calc_cw_growth(   
-    unsigned long   *return_code,
-    double          total_height,
-    double	        height_growth,
-    double	        crown_width,
-    double	        ca_conifers,
-    double	        ca_hardwoods,
-    double	        ca_shrubs,
-    double	        catcon,
-    double	        unif_0_1,
-    double          expf,
-    double          ba,
-    double          flew_site,
-    double          h40,
-    double	        con_tpa,
-    double          *pred_cw_growth,
-    double          *pred_mortality,
-    double          *coeffs_ptr,
-    unsigned long   plant_type);
+void swo_hybrid_project_plant(  
+    unsigned long           *return_code,
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+    unsigned long           n_coeffs,
+    struct COEFFS_RECORD    *coeffs_ptr,
+    struct PLANT_RECORD     *plant_ptr,
+    struct PLOT_RECORD      *plot_ptr,
+    unsigned long           endemic_mortality,  
+    int                     hcb_growth_on,      
+    unsigned long           use_precip_in_hg,   
+    unsigned long           use_rand_err );
 
-void smc_calc_d6_growth(
-    unsigned long   *return_code,
-    double          height_growth,
-    double          total_height,
-    double          dbh,
-    double          dbh_growth,
-    double          d6,
-    double          *pred_d6_growth,
-    double          *c_v_d6_ht,     /* coeffs vector d6 as a func of ht */
-	double          *c_v_d6_ht_dbh, /* coeffs vector d6 as a func of ht & dbh */
-    unsigned long   plant_type);
 
-void smc_calc_d6_from_ht_and_dbh(       
-    unsigned long   *return_code,
-    double          total_height,
-    double          dbh,
-    double          *pred_d6,
-    double          *coeffs_ptr    );
-
-void smc_calc_d6_from_total_height(       
-    unsigned long   *return_code,
-    double          total_height, 
-    double          *pred_d6,
-    double          *coeffs_ptr    );
-
-void smc_calc_crown_width( 
-    unsigned long   *return_code,
-    double          d6_area,
-    double          total_height,
-    double          *pred_crown_width,
-    double          *pred_crown_area,
-    double          *coeffs_ptr,
-    unsigned long   plant_type);
-
-void smc_calc_crown_ratio( 
-      unsigned long   *return_code, 
-      double          total_height,
-      double          d6,
-      double          *pred_cr,
-      double          *coeffs_ptr );
-
-void smc_calc_endemic_mortality(   
-      unsigned long   *return_code,
-      double          expansion_factor,
-      double          *pred_mortality,
-      double          *coeffs_ptr );
 
 /****************************************************************************/
 /* functions in mortality.c                                                 */
@@ -899,12 +834,6 @@ void smc_calc_endemic_mortality(
       double			rd_after,
       double          *x0 );
 
-/*   void calc_endemic_mortality(   
-      unsigned long   *return_code,
-      double          expansion_factor,
-      double          *pred_mortality,
-      double          *coeffs_ptr );
-*/
    void calc_sdi_mortality(
       unsigned long   *return_code,
       double          qmd,
@@ -1039,21 +968,6 @@ void smc_calc_endemic_mortality(
       double					*whc,
       double					*precip);
 
-   void fill_in_missing_values( 
-      unsigned long           *return_code,
-      unsigned long           n_species,
-      struct SPECIES_RECORD   *species_ptr,
-      unsigned long           n_coeffs,
-      struct COEFFS_RECORD    *coeffs_ptr,
-      unsigned long           variant,
-      unsigned long           n_plants,
-      struct PLANT_RECORD     *plants_ptr,
-      unsigned long           n_points,
-      struct PLOT_RECORD      *plots_ptr,
-      double                  fixed_plot_radius,
-      double                  min_prism_dbh,
-	  double                  baf);
-
    void calc_plot_stats_2( 
       unsigned long           *return_code,
       unsigned long           n_species,
@@ -1186,6 +1100,43 @@ void get_in_taller_attribs(
     double                  *cait );
 
 
+
+
+void __stdcall impute_missing_values( 
+      unsigned long           *return_code,
+      unsigned long           n_species,
+      struct SPECIES_RECORD   *species_ptr,
+      unsigned long           n_coeffs,
+      struct COEFFS_RECORD    *coeffs_ptr,
+      unsigned long           variant,
+      unsigned long           n_plants,
+      struct PLANT_RECORD     *plants_ptr,
+      unsigned long           n_points,
+      struct PLOT_RECORD      *plots_ptr,
+      double                  fixed_plot_radius,
+      double                  min_prism_dbh,
+	  double                  baf);
+
+/* this function is deprecated, and calls the previous function */
+void __stdcall fill_in_missing_values( 
+      unsigned long           *return_code,
+      unsigned long           n_species,
+      struct SPECIES_RECORD   *species_ptr,
+      unsigned long           n_coeffs,
+      struct COEFFS_RECORD    *coeffs_ptr,
+      unsigned long           variant,
+      unsigned long           n_plants,
+      struct PLANT_RECORD     *plants_ptr,
+      unsigned long           n_points,
+      struct PLOT_RECORD      *plots_ptr,
+      double                  fixed_plot_radius,
+      double                  min_prism_dbh,
+	  double                  baf);
+
+
+
+
+
 /****************************************************************************/
 /* functions in thin.c                                                      */
 /****************************************************************************/
@@ -1204,6 +1155,42 @@ void get_in_taller_attribs(
       double                  *plants_removed, 
       double                  *ba_removed );
 
+
+/****************************************************************************/
+/* functions in qaqc_mgt.c                                                  */
+/****************************************************************************/
+   void write_test_file(
+        FILE                    *fp,
+        unsigned long           sim_variant,
+        long                    cycle,
+
+        unsigned long           n_species,
+        struct SPECIES_RECORD   *species_ptr,
+
+        unsigned long           n_points,
+        struct PLOT_RECORD      *plots_ptr,
+
+        unsigned long           n_plants,
+        struct PLANT_RECORD     *plants_ptr,
+        
+        unsigned long           n_years_after_planting );
+
+   void write_cips_test_file(
+    FILE                    *fp,
+    long                    cycle,
+
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+
+    unsigned long           n_points,
+    struct PLOT_RECORD      *plots_ptr,
+
+    unsigned long           n_plants,
+    struct PLANT_RECORD     *plants_ptr,
+    
+    unsigned long           n_years_after_planting );
+
+   
 
 
 #ifdef __cplusplus

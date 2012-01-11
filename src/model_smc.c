@@ -5,7 +5,7 @@
 /*                                                                              */
 /********************************************************************************/
 
-/* 	$Id: smc_model.c 671 2010-10-25 21:45:34Z mritchie $	 */
+/* 	$Id: model_smc.c 840 2011-11-22 23:47:23Z hamannj $	 */
 
 //#include <malloc.h>
 #include <math.h>
@@ -15,6 +15,927 @@
 #include <string.h>
 
 #include "conifers.h"
+
+
+
+void smc_calc_height_growth(
+    unsigned long   *return_code,	
+    double          total_height, 
+    double          basal_d,
+    double          flew_site,
+    double          con_tpa,
+    double          h40,
+    double          cash,
+	double          catcon,
+    double          cathw,
+    double          catsh,
+    double          random_norm_0_1,
+    double          random_unif_0_1a,
+    double          random_unif_0_1b,
+    long            ind_random,
+    double          prob_browse,
+    double          prob_top_damage,
+
+/*     double          genetic_worth, */
+
+    double	    genetic_worth_h,
+    double          genetic_worth_d,
+
+    unsigned long   use_genetic_gains,
+    double          *height_growth,
+    double          *coeffs_ptr,
+	unsigned long   plant_type,
+    unsigned long   genetics_age_cut);
+
+void smc_calc_dbh_growth(   
+    unsigned long   *return_code,
+    double          total_height,
+    double          h40,
+    double          flew_site,
+    double          current_dbh,
+    double          basal_area,
+    double          contpa,
+
+
+/*     double          genetic_worth, */
+
+    double	    genetic_worth_h,
+    double          genetic_worth_d,
+
+    unsigned long   genetics_age_cut,
+    unsigned long   use_genetics_gain,
+    double          *pred_dbh_growth,
+    double          *coeffs_ptr,
+    unsigned long   plant_type);
+
+void smc_calc_cr_growth(
+    unsigned long   *return_code,
+    int             hcb_growth_on,
+    double          total_height,
+    double          height_growth,
+    double          crown_ratio,
+    double          conifer_ca,
+    double          hardwood_ca,
+    double          shrub_ca,
+    double          uniform_0_1,
+    double          *cr_growth,
+    double          *coeffs_ptr );
+
+void smc_calc_cw_growth(   
+    unsigned long   *return_code,
+    double          total_height,
+    double	        height_growth,
+    double	        crown_width,
+    double	        ca_conifers,
+    double	        ca_hardwoods,
+    double	        ca_shrubs,
+    double	        catcon,
+    double	        unif_0_1,
+    double          expf,
+    double          ba,
+    double          flew_site,
+    double          h40,
+    double	        con_tpa,
+    double          *pred_cw_growth,
+    double          *pred_mortality,
+    double          *coeffs_ptr,
+    unsigned long   plant_type);
+
+void smc_calc_d6_growth(
+    unsigned long   *return_code,
+    double          height_growth,
+    double          total_height,
+    double          dbh,
+    double          dbh_growth,
+    double          d6,
+    double          *pred_d6_growth,
+    double          *c_v_d6_ht,     /* coeffs vector d6 as a func of ht */
+	double          *c_v_d6_ht_dbh, /* coeffs vector d6 as a func of ht & dbh */
+    unsigned long   plant_type);
+
+void smc_calc_d6_from_ht_and_dbh(       
+    unsigned long   *return_code,
+    double          total_height,
+    double          dbh,
+    double          *pred_d6,
+    double          *coeffs_ptr    );
+
+void smc_calc_d6_from_total_height(       
+    unsigned long   *return_code,
+    double          total_height, 
+    double          *pred_d6,
+    double          *coeffs_ptr    );
+
+void smc_calc_crown_width( 
+    unsigned long   *return_code,
+    double          d6_area,
+    double          total_height,
+    double          *pred_crown_width,
+    double          *pred_crown_area,
+    double          *coeffs_ptr,
+    unsigned long   plant_type);
+
+void smc_calc_crown_ratio( 
+      unsigned long   *return_code, 
+      double          total_height,
+      double          d6,
+      double          *pred_cr,
+      double          *coeffs_ptr );
+
+void smc_calc_endemic_mortality(   
+      unsigned long   *return_code,
+      double          expansion_factor,
+      double          *pred_mortality,
+      double          *coeffs_ptr );
+
+
+void smc_calc_dbh_from_height_and_d6(       
+    unsigned long   *return_code,
+    double          d6,
+    double          total_height,
+    double          *pred_dbh,
+    double          *coeffs_ptr );
+
+void smc_calc_max_crown_width( 
+    unsigned long   *return_code,
+    double          dbh,
+    double          total_height,
+    double          *pred_max_crown_width,
+    double          *coeffs_ptr    );
+
+void smc_calc_exp_from_cover_and_ca(
+    unsigned long   *return_code,
+    double          pct_cover,
+    double          crown_area,
+    double          *pred_expf );
+
+void smc_calc_dbh_from_height_and_d6(       
+    unsigned long   *return_code,
+    double          d6,
+    double          total_height,
+    double          *pred_dbh,
+    double          *coeffs_ptr );
+
+
+/********************************************************************************/
+/* smc_impute                                                                   */
+/********************************************************************************/
+/*  Description :   This function fills in the missing values for the plant     */
+/*                  list. This function makes two passes. The first pass fills  */
+/*                  in the missing dbh,d6, and height then calculated the       */
+/*                  plot level stats and plant values in taller variables       */
+/*                  before making the second pass to fill in crown ratio.       */
+/*                  This is a complete rewrite of fill_in_missing_values.       */
+/*  Author      :   Jeff D. Hamann                                              */
+/*  Date        :   September 12, 1999                                          */
+/*  Returns     :   void                                                        */
+/*  Comments    :   NONE                                                        */
+/*  Arguments   :   unsigned long *return_code  - pointer to a return code      */
+/*                  unsigned long n_plants      - total number fo plants in the */
+/*                      plants pointer array                                    */
+/*                  struct PLANT_RECORD *plants_ptr - array of plants in the    */
+/*                      sample to be projected                                  */
+/*                  struct PLOT_RECORD  *plot_ptr   - pointer to the current    */
+/*                      plot that is to be grown                                */
+/*                  unsigned long n_species - size of the species_ptr           */
+/*                  struct SPECIES_RECORD   *species_ptr - array of             */
+/*                      SPECIES_RECORD's that hold species specific information */
+/*                  unsigned long   n_coeffs - sizes of the coeffs_ptr array    */
+/*                  struct COEFFS_RECORD *coeffs_ptr - array of coefficients    */
+/*                      that are used to project the individual plants on the   */
+/*                      plot.                                                   */
+/*                  unsigned long   variant                                     */
+/********************************************************************************/
+void smc_impute( 
+			    unsigned long           *return_code,
+			    unsigned long           n_species,
+			    struct SPECIES_RECORD   *species_ptr,
+			    unsigned long           n_coeffs,
+			    struct COEFFS_RECORD    *coeffs_ptr,
+			    unsigned long           variant,
+			    unsigned long           n_plants,
+			    struct PLANT_RECORD     *plants_ptr,
+			    unsigned long           n_points,
+			    struct PLOT_RECORD      *plots_ptr,
+			    double                  fixed_plot_radius,
+			    double                  min_dbh,
+			    double                  baf )
+{
+
+  unsigned long   i;
+  struct  PLANT_RECORD    *plant_ptr = NULL;
+  struct  PLOT_RECORD     *plot_ptr = NULL;
+  struct  COEFFS_RECORD   *c_ptr = NULL;
+  unsigned long   error_count = 0;
+
+  double  bait[PLANT_TYPES];
+  double  cait[PLANT_TYPES];
+
+  double        cait_c;
+  double        cait_h;
+  double        cait_s;
+
+  error_count  = 0;
+  *return_code = CONIFERS_SUCCESS;
+
+  /* first check to make sure there are plants in the array */
+  if( n_plants <= 0 || plants_ptr == NULL ) 
+    {
+      *return_code = INVALID_PLANT_COUNT;
+      return;
+    }
+
+  /* first check to make sure there are plants in the array */
+  if( n_points <= 0 || plots_ptr == NULL ) 
+    {
+      *return_code = INVALID_PLOT_COUNT;
+      return;
+    }
+
+  /* FIRST PASS */
+  /* make a first pass to calculate the basic data for the plants */
+  /* fill in missing dbh, d6, and total heights */
+  plant_ptr = &plants_ptr[0];
+  for( i = 0; i < n_plants; i++, plant_ptr++ )
+    {
+
+      plant_ptr->errors = E_OKDOKEY; /* default value for error is set=ok */ 
+
+      c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+      /* don't go any further if you don't have a functional species code */
+      if( c_ptr == NULL )
+	{
+	  plant_ptr->errors |= E_INVALID_SPECIES;
+	  error_count += 1;
+	  continue;
+	}
+
+      /* only fill in missing values for stocked plots */
+      if( is_non_stocked( c_ptr ) )
+	{
+	  continue;
+	}
+
+      /* if the stem is all below d6  */
+      if( plant_ptr->tht < 0.50 && !is_non_stocked( c_ptr ) )
+	{        
+	  plant_ptr->errors |= E_INVALID_HEIGHT;
+	  error_count += 1;
+	}
+
+      /* if the total height <= 4.5 and there's a dbh obs */
+      /* this error triggers on plants that are exactly 4.5 feet tall */
+	/* and have a positive dbh observation                          */
+	if( plant_ptr->tht < 4.5 && plant_ptr->dbh > 0.0 )
+	  {
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
+	  }
+
+	/* if it's a tree with a dbh obs */
+	if(!is_tree( c_ptr) && plant_ptr->dbh > 0.0)
+	  {
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
+	  }
+
+
+	/* if the plant doesn't have a dbh, fill that in    */ 
+	/* if the stem is between 6" and 4.5 feet tall      */
+	if( plant_ptr->tht >= 0.50 )
+	  {
+	    if( is_tree( c_ptr ) )
+	      {
+		if( plant_ptr->d6 == 0.0 )
+		  {
+		    if(plant_ptr->dbh > 0.0 && plant_ptr->tht >4.5)
+		      {
+			*return_code = CONIFERS_SUCCESS;
+			
+			      smc_calc_d6_from_ht_and_dbh(return_code,
+							  plant_ptr->tht,
+							  plant_ptr->dbh,
+							  &plant_ptr->d6,
+							  c_ptr->d6_ht_dbh);
+
+                  if( *return_code != CONIFERS_SUCCESS)
+			      {
+				    plant_ptr->errors |= E_INVALID_D6;
+				    error_count += 1;
+			      }
+		      }
+		    else
+		      {
+		          /* if the dbh != 0 and tht < 4.5? */
+			    *return_code = CONIFERS_SUCCESS;
+
+			  
+			      smc_calc_d6_from_total_height(  return_code, 
+							      plant_ptr->tht, 
+							      &plant_ptr->d6, 
+							      c_ptr->d6_ht);
+			    
+			    if( *return_code != CONIFERS_SUCCESS)
+			      {
+				plant_ptr->errors |= E_INVALID_D6;
+				error_count += 1;
+			      }
+		      }
+		  }
+
+
+            /* you need to impute a d12 from height and veg cover (or anything) here */
+
+        /* this is the code for computing the missing dbh when the tree */
+          /* is taller than 4.5 feet                                        */
+          /* if the plant record has a missing d12 and the total height is > 30 CM */
+          /* this only applies to the CONIFERS_CIPS variant */
+		if( plant_ptr->d12 == 0.0 && plant_ptr->tht > ( 30.0 * CM2FT ) )
+		{
+		    *return_code = CONIFERS_SUCCESS;
+            /* this function might need plot level stats too. */            
+            //plot_ptr = get_plot( plant_ptr->plot, n_points, plots_ptr );
+            //cips_calc_d12_from_ht_and_veg_cov(  return_code,
+			//            plant_ptr->tht,
+			//            plot_ptr->shrub_pct_cover,
+			//            &plant_ptr->d12,
+			//            c_ptr->dbh_ht_veg_cov );
+        }
+
+          /* this is the code for computing the missing dbh when the tree */
+          /* is taller than 4.5 feet                                        */
+		if( plant_ptr->d6 > 0.0 && plant_ptr->dbh == 0.0 && plant_ptr->tht > 4.5)
+		  {
+		    *return_code = CONIFERS_SUCCESS;
+		    
+			  /* there was never a function developed for the SMC variant */
+			  smc_calc_dbh_from_height_and_d6(return_code,
+						      plant_ptr->d6,
+						      plant_ptr->tht,
+						      &plant_ptr->dbh,
+						      c_ptr->d6_ht_dbh);
+			
+			if( *return_code != CONIFERS_SUCCESS)
+			  {
+			    plant_ptr->errors |= E_INVALID_DBH;
+			    error_count += 1;
+			  }
+        }
+
+		if(plant_ptr->expf <=0.0 && fixed_plot_radius > 0.0  )
+		  {
+		    if( plant_ptr->errors & E_INVALID_DBH)
+		      {
+			plant_ptr->expf = 0;
+			plant_ptr->errors |= E_INVALID_EXPF;
+			error_count += 1;
+		      }
+		    else if( plant_ptr->dbh > min_dbh )
+		      {
+			plant_ptr->expf = baf / (plant_ptr->dbh * plant_ptr->dbh * FC_I);
+		      }
+		    else
+		      {
+			plant_ptr->expf = SQ_FT_PER_ACRE / 
+			  ( fixed_plot_radius * fixed_plot_radius * MY_PI );
+		      }            
+
+		    /* multiply the expansion factor by the number of   */
+		    /* stems that this plant record represents          */
+		    plant_ptr->expf *= plant_ptr->n_stems;
+		  }
+	      }
+
+            /* if the plant is a shrub, then compute the d6 if it's missing */
+	      if( is_shrub( c_ptr ) )
+		{
+		  if( plant_ptr->d6 == 0.0 )
+		    {
+		      /* compute the d6 from the height */
+		      *return_code = CONIFERS_SUCCESS;
+		      
+			
+			    smc_calc_d6_from_total_height(  return_code, 
+							    plant_ptr->tht, 
+							    &plant_ptr->d6, 
+							    c_ptr->d6_ht);
+
+                if( *return_code != CONIFERS_SUCCESS)
+			    {
+			      plant_ptr->errors |= E_INVALID_D6;
+			      error_count += 1; 
+			    }
+		    }
+
+		}
+
+	  }
+
+	/* fill in the remaining values */
+	plant_ptr->d6_area      = plant_ptr->d6 * plant_ptr->d6 * FC_I;
+	plant_ptr->basal_area   = plant_ptr->dbh * plant_ptr->dbh * FC_I;
+    plant_ptr->d12_area      = plant_ptr->d12 * plant_ptr->d12 * FC_I;
+	    
+
+	    /* now calculate the crown width for the plant record */
+	    if( plant_ptr->crown_width <= 0.0 )
+	      {
+		*return_code = CONIFERS_SUCCESS;
+		
+		  		      /* not developed for the variant, imported from swo model */
+		      smc_calc_crown_width(   return_code,
+					  plant_ptr->d6_area,
+					  plant_ptr->tht,
+					  &plant_ptr->crown_width,
+					  &plant_ptr->crown_area,
+					  c_ptr->crown_width,
+                      c_ptr->type );
+
+		    if( *return_code != CONIFERS_SUCCESS)
+		      {
+			plant_ptr->errors |= E_INVALID_CW;
+			error_count += 1;
+		      }
+	      }
+
+	    /*  MOD033  */
+	    /* this should happen no matter what... */
+	    plant_ptr->crown_area = plant_ptr->crown_width * plant_ptr->crown_width * MY_PI / 4.0;
+
+	    /* fill in the expansion factors for those plant records    */
+	    /* that don't have one filled in by using the sample        */
+	    /* design records. Mostly, shrubs will have the expf filled */
+	    /* by calling this function, but it should work for trees   */
+	    if( plant_ptr->expf <= 0.0 )
+	      {
+		
+		    /* not developed for the variant */
+		    smc_calc_exp_from_cover_and_ca( return_code,
+						plant_ptr->pct_cover,
+						plant_ptr->crown_area,
+						&plant_ptr->expf );
+
+		  if( *return_code != CONIFERS_SUCCESS)
+		    {
+		      plant_ptr->errors |= E_INVALID_EXPF;
+		      error_count += 1;
+		    }
+
+	      }
+    
+    }
+
+  calc_plot_stats_2(    return_code, 
+			n_species,
+			species_ptr,
+			n_coeffs,
+			coeffs_ptr,
+			n_plants,
+			plants_ptr,
+			n_points,
+			plots_ptr );
+
+    /* todo: need_error_trap_here */
+
+    /* SECOND PASS */
+    /* The second pass is required becuase the crown values are */
+    /* dependent on the basic plot summary statistics which are */
+    /* calculated for the plot before hand                      */
+    /* now make the second pass to impute tree values that      */
+    /* require plot level statistics.                           */
+
+    //error_count  = 0;
+    plant_ptr = &plants_ptr[0];
+    for( i = 0; i < n_plants; i++, plant_ptr++ )
+      {
+
+	c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+
+	/* don't go any further if you don't have a functional species code */
+	if( c_ptr == NULL )
+	  {
+	    continue;
+	  }
+
+	/* set the pointer for the current plot that the plant is on */
+	plot_ptr = get_plot( plant_ptr->plot, n_points, plots_ptr );
+        
+	/* fill in the percent cover for the plant recor */
+	if( plant_ptr->pct_cover == 0.0)  /* fill in percent cover */
+	  {
+	    plant_ptr->pct_cover = 100.0 * plant_ptr->expf * plant_ptr->crown_area / SQ_FT_PER_ACRE;
+	  }
+
+	/* if the crown ratio is invalid or missing     */
+	/* fill in the crown ratio for the plant record */
+	if( is_tree( c_ptr ) )
+	  {
+	    if( plant_ptr->cr <= 0.0 || plant_ptr->cr > 1.0 )
+	      {
+
+            /* maybe replace these select-case statements with function calls? */
+
+		get_in_taller_attribs( plant_ptr, plot_ptr, bait, cait );
+            
+
+		cait_c       =   cait[CONIFER];
+		cait_h       =   cait[HARDWOOD];
+		cait_s       =   cait[SHRUB];
+		*return_code = CONIFERS_SUCCESS;
+
+		      smc_calc_crown_ratio(return_code,  
+					   plant_ptr->tht,
+					   plant_ptr->d6,
+					   &plant_ptr->cr,
+					   c_ptr->crown_ratio);
+
+	      }  /* end of bad or missing crown ratio */                            
+    } /* end of is_tree check */
+
+	if( *return_code != CONIFERS_SUCCESS)
+	  {
+	    plant_ptr->errors |= E_INVALID_CR;
+	    error_count += 1;
+	  }
+
+	plant_ptr->max_crown_width = 0.0;
+
+	/*  MOD014 */
+	  /* if it's a tree, compute the crown width */
+	  if( is_tree( c_ptr ) )
+	    {
+	      *return_code = CONIFERS_SUCCESS;
+	      
+		    /* not developed for the model */
+		    smc_calc_max_crown_width(  return_code,
+					   plant_ptr->dbh,
+					   plant_ptr->tht,
+					   &plant_ptr->max_crown_width,
+					   c_ptr->max_crown_width);
+
+            if( *return_code != CONIFERS_SUCCESS)
+		    {
+		      plant_ptr->errors |= E_INVALID_MCW;   
+		      error_count += 1;
+		    }
+	    }
+      }
+   
+    if (error_count > 0)
+      {
+	*return_code = FILL_VALUES_ERROR;
+	return;
+      }
+    *return_code = CONIFERS_SUCCESS;
+
+}
+
+
+/********************************************************************************/
+/* smc_project_plant                                                            */
+/********************************************************************************/
+/*  Description :   computes plant growth components for SMC variant		*/
+/*  Author      :   Jeff D. Hamann                                              */
+/*  Date        :   August 28, 2007						*/
+/*  Returns     :   void                                                        */
+/*  Comments    :   updated values are height_growth, d6_growth, dbh_growth,    */
+/*                  crown_ratio_growth, crown_width_growth, and max_crown_width */
+/*  Arguments   :   unsigned long *return_code  - pointer to a return code      */
+/*                  unsigned long n_plants      - total number fo plants in the */
+/*                      plants pointer array                                    */
+/*                  struct PLANT_RECORD *plants_ptr - array of plants in the    */
+/*                      sample to be projected                                  */
+/*                  struct PLOT_RECORD  *plot_ptr   - pointer to the current    */
+/*                      plot that is to be grown                                */
+/*                  unsigned long n_species - size of the species_ptr           */
+/*                  struct SPECIES_RECORD   *species_ptr - array of             */
+/*                      SPECIES_RECORD's that hold species specific information */
+/*                  unsigned long   n_coeffs - sizes of the coeffs_ptr array    */
+/*                  struct COEFFS_RECORD *coeffs_ptr - array of coefficients    */
+/*                      that are used to project the individual plants on the   */
+/*                      plot.                                                   */
+/********************************************************************************/
+void smc_project_plant(  
+   unsigned long           *return_code,
+   unsigned long           n_species,
+   struct SPECIES_RECORD   *species_ptr,
+   unsigned long           n_coeffs,
+   struct COEFFS_RECORD    *coeffs_ptr,
+   struct PLANT_RECORD     *plant_ptr,
+   struct PLOT_RECORD      *plot_ptr,
+   unsigned long           endemic_mortality,  
+   int                     hcb_growth_on,      
+   unsigned long           use_precip_in_hg,   
+   unsigned long           use_rand_err,
+   struct SUMMARY_RECORD   *before_sums,
+   unsigned long           use_genetic_gains,
+   unsigned long           genetics_age_cut)
+{
+
+   struct COEFFS_RECORD    *c_ptr;
+
+   /* tree level stats */
+   double  bat_total;
+   double  bat_c;
+   double  bat_h;
+   double  bat_s;
+   double  bat_c_h;
+   double  cat_c;
+   double  new_d6_area;
+   double  new_d12_area;
+
+   unsigned long htidx = 0;
+
+   double  normal;
+   double  browse_random_unif_0_1;
+   double  top_dam_random_unif_0_1;
+   double  basal_area;
+   double  h40;
+   double  tpa_con_stand;
+   double  current_height;
+   double  new_height;
+
+   double  bait[PLANT_TYPES];
+   double  cait[PLANT_TYPES];
+
+    
+   /* get the supporting structures for the plant */
+   c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+   /* don't go any further if you don't    */
+   /* have a functional species code       */
+   if( c_ptr == NULL )
+   {
+      *return_code = CONIFERS_ERROR;
+      return;
+   }
+
+   /* get a uniform deviate for the browse */
+   /* and one for the top damage           */
+   normal                  = (double)gauss_dev();
+   browse_random_unif_0_1  = uniform_0_1();
+   top_dam_random_unif_0_1 = uniform_0_1();
+
+
+   tpa_con_stand  = before_sums->con_tpa;
+   h40		      = before_sums->height_40;
+   basal_area     = before_sums->basal_area;
+
+    /* this function takes a vector [PLANT_TYPES][TALLER_PLANT_SIZE] */
+    //get_taller_attribs( plant_ptr->tht, 
+    //                    plot_ptr, 
+    //                    bait, 
+    //                    cait );
+
+    get_in_taller_attribs(  plant_ptr,
+                            plot_ptr,
+                            bait,
+                            cait );
+
+   bat_c       =   bait[CONIFER];
+   bat_h       =   bait[HARDWOOD];
+   bat_s       =   bait[SHRUB];
+
+   /* add for new model */
+   //cat_c       =   plot_ptr->cait[CONIFER][htidx];
+   cat_c       =   cait[CONIFER];
+
+
+   bat_c_h     =   bat_c + bat_h;
+   bat_total   =   bat_c + bat_h + bat_s;
+
+   plant_ptr->tht_growth = 0.0;
+   plant_ptr->d6_growth  = 0.0;
+   plant_ptr->d12_growth  = 0.0;
+
+   plant_ptr->cw_growth  = 0.0;
+   plant_ptr->cr_growth  = 0.0;    /* these initializations were added august 2008 by mwr */
+   plant_ptr->dbh_growth = 0.0;
+   plant_ptr->expf_change= 0.0;
+
+   if( is_non_stocked(c_ptr) || plant_ptr->expf <= 0.0)
+   {
+       *return_code = CONIFERS_SUCCESS;
+       return;
+   }
+
+   current_height = plant_ptr->tht; 
+   new_height = 0.0;
+
+   if( is_tree( c_ptr ) || is_shrub( c_ptr))
+   {
+    	smc_calc_height_growth( return_code,
+                                plant_ptr->tht,
+                                plant_ptr->d6,
+                                plot_ptr->site_30,
+	                            tpa_con_stand,
+	                            h40,
+	                            plot_ptr->ca_s,
+		                        plot_ptr->cait[CONIFER][htidx],
+                                plot_ptr->cait[HARDWOOD][htidx],
+                                plot_ptr->cait[SHRUB][htidx],
+	                            normal,                   
+	                            browse_random_unif_0_1,   
+	                            top_dam_random_unif_0_1,  
+	                            use_rand_err,         
+	                            species_ptr[plant_ptr->sp_idx].browse_damage,
+	                            species_ptr[plant_ptr->sp_idx].mechanical_damage,
+                                
+								species_ptr[plant_ptr->sp_idx].genetic_worth_h,
+								species_ptr[plant_ptr->sp_idx].genetic_worth_d,
+
+                                use_genetic_gains,
+                                &plant_ptr->tht_growth,
+                                c_ptr->ht_growth,
+		                        c_ptr->type,
+                                genetics_age_cut) ;   
+        if ( *return_code != CONIFERS_SUCCESS)
+        {
+            return;
+        }
+		     
+   }
+
+   
+   if( is_tree( c_ptr ) )
+   {
+        if(plant_ptr->tht > 4.5 && plant_ptr->dbh <= 0.0)
+        {
+            if( plant_ptr->d6 <= 0.0 )
+            {
+		   /* todo: make sure this isn't the smc version */
+                smc_calc_d6_from_total_height(  return_code,
+                                            plant_ptr->tht, 
+                                            &plant_ptr->d6,
+                                            c_ptr->d6_ht);
+                if ( *return_code != CONIFERS_SUCCESS)
+                {
+                    return;
+                }
+            }
+		   /* todo: make sure this isn't the smc version */
+            smc_calc_dbh_from_height_and_d6(return_code,
+                                        plant_ptr->d6,
+                                        plant_ptr->tht,
+                                        &plant_ptr->dbh,
+                                        c_ptr->d6_ht_dbh );
+            if( *return_code != CONIFERS_SUCCESS )
+            {
+                return;
+            }
+        }
+
+	/* plot_ptr->site_30 == 0.0, this will still grow! */
+        smc_calc_dbh_growth(return_code,
+			    plant_ptr->tht,
+			    h40,
+			    plot_ptr->site_30,
+			    plant_ptr->dbh,
+			    basal_area,
+			    tpa_con_stand,
+			    
+			    species_ptr[plant_ptr->sp_idx].genetic_worth_h,
+			    species_ptr[plant_ptr->sp_idx].genetic_worth_d,
+			    
+			    genetics_age_cut,
+                            use_genetic_gains,
+			    &plant_ptr->dbh_growth,
+			    c_ptr->dbh_growth,
+                            c_ptr->type);
+	
+	      
+        if( *return_code != CONIFERS_SUCCESS )
+        {
+	        return;
+        }
+            
+      /* calculate the new crown ratio and    */
+      /* calculate the difference             */
+                      
+        smc_calc_cr_growth( return_code,
+			                hcb_growth_on,                
+			                plant_ptr->tht,
+			                plant_ptr->tht_growth,
+			                plant_ptr->cr,
+			                plot_ptr->ca_c,
+			                plot_ptr->ca_h,
+			                plot_ptr->ca_s,
+			                uniform_0_1(),
+			                &plant_ptr->cr_growth,
+			                c_ptr->cr_growth);
+
+        if( *return_code != CONIFERS_SUCCESS )
+        {
+    	   return;
+        }
+
+   }
+
+
+   new_d6_area = plant_ptr->d6 * plant_ptr->d6 * FC_I;
+   new_d12_area = plant_ptr->d12 * plant_ptr->d12 * FC_I;
+
+   if( is_tree( c_ptr ))   /* then call for d6 growth */
+   {
+     if( plant_ptr->d6 <= 0.0 )
+     {
+		 /* todo: make sure this isn't the smc version */
+		 /* this is supposed to be called from the old variant */
+		 /* check the coefficient */
+         smc_calc_d6_from_total_height( return_code,
+//         smc_calc_d6_from_total_height( return_code,
+                                    plant_ptr->tht, 
+                                    &plant_ptr->d6,
+                                    c_ptr->d6_ht);
+         if ( *return_code != CONIFERS_SUCCESS)
+         {
+             return;
+         }
+     }
+
+     smc_calc_d6_growth(return_code,
+			            plant_ptr->tht_growth,
+			            plant_ptr->tht,
+                        plant_ptr->dbh,
+			            plant_ptr->dbh_growth,
+			            plant_ptr->d6,
+        	            &plant_ptr->d6_growth,
+			            c_ptr->d6_ht,
+			            c_ptr->d6_ht_dbh,
+			            c_ptr->type);
+     if ( *return_code != CONIFERS_SUCCESS)
+     {
+          return;
+     }
+
+   } 
+
+   if( is_shrub( c_ptr)) /* set d6 as a static function */
+   {
+       new_height=current_height;
+       if(plant_ptr->tht_growth>0.0)
+       {
+           new_height=current_height+plant_ptr->tht_growth;
+
+		   /* todo: make sure this isn't the smc version */
+		   /* todo: fixed? -check with martin */
+           smc_calc_d6_from_total_height(return_code,
+                                     new_height, 
+                                     &plant_ptr->d6,
+                                     c_ptr->d6_ht);
+           /* need_error_trap_here */
+       }
+       plant_ptr->d6_growth  = 0.0;
+   }
+
+
+   if( is_tree( c_ptr ) || is_shrub( c_ptr))
+   {
+	    smc_calc_cw_growth( return_code,
+			                plant_ptr->tht,
+			                plant_ptr->tht_growth,
+			                plant_ptr->crown_width,
+			                plot_ptr->ca_c,
+			                plot_ptr->ca_h,
+			                plot_ptr->ca_s,
+			                cat_c,
+			                uniform_0_1(),
+			                plant_ptr->expf,
+			                basal_area,
+			                plot_ptr->site_30,
+			                h40,
+			                tpa_con_stand,
+			                &plant_ptr->cw_growth,
+			                &plant_ptr->expf_change,
+			                c_ptr->cw_growth,
+			                c_ptr->type);
+        if ( *return_code != CONIFERS_SUCCESS)
+        {
+            return;
+        }
+   }
+
+   if( endemic_mortality == 1 )    
+   {
+        smc_calc_endemic_mortality( return_code,
+			                        plant_ptr->expf,
+			                        &plant_ptr->expf_change,
+ 			                        &species_ptr[plant_ptr->sp_idx].endemic_mortality );
+        if ( *return_code != CONIFERS_SUCCESS)
+        {
+            return;
+        }
+   }
+
+   *return_code = CONIFERS_SUCCESS;
+
+}
+
+
+
+
 
 
 void get_age_cut(           
@@ -1322,3 +2243,227 @@ void smc_calc_endemic_mortality(
     }
 
 }
+
+
+/********************************************************************************/
+/* not originally defined by the model's author                                 */
+/********************************************************************************/
+
+/* smc_max_crown_width              */
+/* smc_calc_expf_from_cover_and_ca  */
+/* smc_calc_crown_width             */
+/* smc_calc_dbh_from_height_and_d6  */
+/* smc_calc_d6_from_total_height    */
+/* smc_calc_crown_ratio             */
+/* smc_calc_d6_from_ht_and_dbh      */
+
+/* they are defined below imported from the swo_model. You need to make sure    */
+/* the coefficients are also imported from the original.                        */
+
+/********************************************************************************/
+
+
+
+
+ 
+
+/********************************************************************************/
+/*                  calc_max_crown_width  S2                                    */
+/********************************************************************************/
+/*  Description :   smc_calc_max_crown_width                                    */   
+/*  Author      :   Martin W. Ritchie - originally from model_swo.c             */
+/*  Date        :   October 13, 1999                                            */
+/*  Returns     :   void                                                        */
+/*  Comments    :   NONE                                                        */
+/*  Arguments   :                                                               */
+/*  return void                                                                 */
+/*  unsigned long *return_code  -   return code for calling function to check   */
+/*  dbh                         -   dbh of the tree                             */
+/*  total_height                -   total height of the subject tree            */
+/*  *pred_max_crown_width       -   predicted MCW in feet                       */
+/*  vector<double> *coeffs_ptr       -   pointer to a vector of doubles that    */
+/*                                  contain the coefficients for the            */
+/*                                  functional species code                     */
+/********************************************************************************/
+/*  Formula : mcw = b0 + b1 * dbh + b2 * dbh * dbh                              */ 
+/*           where: mcw= maximum crown width of an open grown tree in feet      */
+/*                  dbh = breast height diameter in inches                      */
+/*  Source  : Paine and Hann                                                    */
+/*  Coeffs  : MW                                                                */
+/********************************************************************************/
+
+void smc_calc_max_crown_width( 
+    unsigned long   *return_code,
+    double          dbh,
+    double          total_height,
+    double          *pred_max_crown_width,
+    double          *coeffs_ptr    )
+{
+    double  b0;
+    double  b1;
+    double  b2;
+
+    if( coeffs_ptr == NULL ) /* MOD002 */
+    {
+        *return_code = INVALID_COEFF;
+        *pred_max_crown_width = 0.0;
+        return;
+    }
+    
+    if( dbh < 0.0 ) /* MOD013 */
+    {
+        *return_code = INVALID_INPUT_VAL;
+        *pred_max_crown_width = 0.0;
+        return;
+    }
+
+    b0 = coeffs_ptr[0];
+    b1 = coeffs_ptr[1];
+    b2 = coeffs_ptr[2];
+    
+    /* MOD012 */
+    if( total_height <= 4.5 )
+    {
+        *pred_max_crown_width = b0 * (total_height / 4.5);
+    }
+    else
+    {
+        *pred_max_crown_width = b0 + b1 * dbh + b2 * dbh * dbh;
+    }
+
+    *return_code = CONIFERS_SUCCESS;
+
+    if( *pred_max_crown_width < 0.0 )  /*  MOD006  */
+    {
+        *pred_max_crown_width   = 0.0;
+        *return_code            = CONIFERS_ERROR;
+    }
+}
+
+
+/* smc_calc_expf_from_cover_and_ca  */
+
+/********************************************************************************/
+/*                  calc_exp_from_cover_and_ca       S8                         */
+/********************************************************************************/
+/*  Description :   Equation to calculate expansion factor for shrubs (& hw)    */
+/*                  entered on a plot+pct cover basis                           */   
+/*  Author      :   Martin W. Ritchie                                           */
+/*  Date        :   October 13, 1999                                            */
+/*  Returns     :   void                                                        */
+/*  Comments    :   NONE                                                        */
+/*  Arguments   :                                                               */
+/*  unsigned long *return_code  -   return code for calling function to check   */
+/*  pct_cover                   -   Percent cover on the plot for this observ.  */
+/*  crown_area                  -   Crown area                                  */
+/*  vector<double> *coeffs_ptr       -   pointer to a vector of doubles that    */
+/*                                  contain the coefficients for the            */
+/*                                  functional species code                     */
+/*  *pred_expf                  -   predicted expansion factor                  */
+/********************************************************************************/
+/*  Formula:  exp = (43560 * pct_cover / 100) / ca                              */ 
+/*  Source  : Me                                                                */
+/*  Coeffs  : none                                                              */
+/********************************************************************************/
+void smc_calc_exp_from_cover_and_ca(
+    unsigned long   *return_code,
+    double          pct_cover,
+    double          crown_area,
+    double          *pred_expf)
+{
+    double  cover_total=0.0;
+    *return_code        = CONIFERS_ERROR;
+    
+    /* Cover must be between 0 and 100 per record   */
+    if( pct_cover < 0.0 || pct_cover > 100.0 )
+    {
+        *return_code    = CONIFERS_ERROR;   
+        *pred_expf      = 0.0;
+        return;
+    }
+
+    /* crown area must be > 0 to avoid bad things   */
+    if( crown_area <= 0.0 )
+    {
+        *return_code    = CONIFERS_ERROR;   
+        *pred_expf      = 0.0;
+        return;
+    }
+
+    /* This is the total cover in sq ft from %cvr */
+    cover_total     =   SQ_FT_PER_ACRE * pct_cover * 0.01;
+    *pred_expf      =   cover_total / crown_area;           
+    *return_code    =   CONIFERS_SUCCESS;
+}
+
+
+/* smc_calc_crown_width             */
+
+
+/* smc_calc_dbh_from_height_and_d6  */
+/********************************************************************************/
+/*                  calc_dbh_from_total_height_and_d6           S7              */
+/********************************************************************************/
+/*  Description :   Calculate a dbh from total height and basal diameter        */
+/*  Author      :   Martin W. Ritchie                                           */
+/*  Date        :   October 13, 1999                                            */
+/*  Returns     :   void                                                        */
+/*  Comments    :   NONE                                                        */
+/*  Arguments   :                                                               */
+/*  unsigned long *return_code  -   return code for calling function to check   */
+/*  total_height                -   total height of the subject tree            */
+/*  d6                          -   basal diameter of the largest stem          */
+/*  *pred_dbh                   -   predicted breast height diameter from the   */
+/*                                  function                                    */
+/*  vector<double> *coeffs_ptr  -   pointer to a vector of doubles that         */
+/*                                  contain the coefficients for the            */
+/*                                  functional species code                     */
+/********************************************************************************/
+/*  Formula:  dbh = d6 * (b0 - b1 * exp (-b2* ln( H - 4.5)))                    */ 
+/*  Source  : Ritchie, see d6_from_height_and_dbh                               */
+/*  Coeffs  : DH                                                                */
+/********************************************************************************/
+void smc_calc_dbh_from_height_and_d6(       
+    unsigned long   *return_code,
+    double          d6,
+    double          total_height,
+    double          *pred_dbh,
+    double          *coeffs_ptr )
+{
+
+    double  b0;
+    double  b1;
+    double  b2;
+
+    if( coeffs_ptr == NULL )
+    {
+        *return_code = INVALID_COEFF;
+        return;
+    }
+
+    if( total_height <= 4.5 )
+    {
+        *return_code = INVALID_INPUT_VAL;
+        return;
+    }
+
+
+    b0  = coeffs_ptr[0];
+    b1  = coeffs_ptr[1];
+    b2  = coeffs_ptr[2];
+    
+    *pred_dbh = d6 * ( b0 - b1 * exp ( -b2 * ( total_height - 4.5 ) ) );
+
+    if( *pred_dbh < 0.0 )
+    {
+        *pred_dbh = 0.1;
+    }
+
+    *return_code = CONIFERS_SUCCESS;
+}
+
+
+
+/* smc_calc_d6_from_total_height    */
+
+

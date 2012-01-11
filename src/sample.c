@@ -22,10 +22,10 @@
 /****************************************************************************/
 
 
-/* 	$Id: sample.c 619 2009-01-05 16:26:58Z hamannj $	 */
+/* 	$Id: sample.c 840 2011-11-22 23:47:23Z hamannj $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: sample.c 619 2009-01-05 16:26:58Z hamannj $"; */
+/* static char vcid[] = "$Id: sample.c 840 2011-11-22 23:47:23Z hamannj $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -38,10 +38,6 @@
 #include <time.h>
 
 #include "conifers.h"
-
-/* MOD005 */
-//static float gauss_dev();
-//float gauss_dev();
 
 
 /****************************************************************************/

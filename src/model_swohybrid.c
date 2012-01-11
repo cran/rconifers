@@ -36,13 +36,11 @@
 /*                                                                              */
 /*------------------------------------------------------------------------------*/
 
-/* 	$Id: swo_model.c 620 2009-01-05 17:25:02Z mritchie $	 */
+/* 	$Id: model_swohybrid.c 840 2011-11-22 23:47:23Z hamannj $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: swo_model.c 620 2009-01-05 17:25:02Z mritchie $"; */
+/* static char vcid[] = "$Id: model_swohybrid.c 840 2011-11-22 23:47:23Z hamannj $"; */
 /* #endif /\* lint *\/ */
-
-
 
 
 //#include <malloc.h>
@@ -53,6 +51,925 @@
 #include <string.h>
 
 #include "conifers.h"
+
+void swo_hybrid_calc_crown_width( 
+    unsigned long   *return_code,
+    double          d6_area,
+    double          total_height,
+    double          *pred_crown_width,
+    double          *pred_crown_area,
+    double          *coeffs_ptr);
+
+void swo_hybrid_calc_max_crown_width( 
+    unsigned long   *return_code,
+    double          dbh,
+    double          total_height,
+    double          *pred_max_crown_width,
+    double          *coeffs_ptr    );
+
+void swo_hybrid_calc_crown_ratio(
+    unsigned long *return_code,  
+    double  total_height,
+    double  d6,
+    double  *pred_cr,
+    double  *coeffs_ptr    );
+
+void swo_hybrid_calc_d6_from_total_height(       
+    unsigned long   *return_code,
+    double          total_height, 
+    double          *pred_d6,
+    double          *coeffs_ptr    );
+
+void swo_hybrid_calc_d6_from_ht_and_dbh(       
+    unsigned long   *return_code,
+    double          total_height,
+    double          dbh,
+    double          *pred_d6,
+    double          *coeffs_ptr    );
+
+void swo_hybrid_calc_dbh_from_height(       
+    unsigned long   *return_code,
+    double          total_height,
+    double          *pred_dbh,
+    double          *coeffs_ptr    );
+
+void swo_hybrid_calc_dbh_from_height_and_d6(       
+    unsigned long   *return_code,
+    double          d6,
+    double          total_height,
+    double          *pred_dbh,
+    double          *coeffs_ptr );
+
+void swo_hybrid_calc_exp_from_cover_and_ca(
+    unsigned long   *return_code,
+    double          pct_cover,
+    double          crown_area,
+    double          *pred_expf);
+
+void swo_hybrid_calc_height_from_d6(       
+    unsigned long   *return_code,
+    double          d6,
+    double          *pred_total_height,
+    double          *coeffs_ptr    );
+
+
+void swo_hybrid_calc_height_from_dbh(       
+    unsigned long   *return_code,
+    double          dbh,
+    double          *pred_total_height,
+    double          *coeffs_ptr    );
+
+void swo_hybrid_calc_nstems_from_cw_and_height(
+    unsigned long   *return_code,
+    double          total_height,
+    double          crown_width,
+    long            *pred_n_stems,
+    double          *coeffs_ptr      );
+
+void swo_hybrid_calc_volume(
+    unsigned long   *return_code,
+    double          total_height,
+    double          dbh,
+    double          *pred_volume,
+    double          *coeffs_ptr );
+
+void swo_hybrid_calc_biomass(
+    unsigned long   *return_code,
+    double          total_height,
+    double          basal_diameter,
+	double          crown_width,
+	double          dbh,
+    double     		*pred_biomass,
+    double          *coeffs_ptr );
+
+
+void swo_hybrid_calc_d6_growth(
+	unsigned long   *return_code,
+    double          height_growth,
+    double          crown_width,
+    double          total_height,
+    double          d6,
+    double          cat_shrubs,
+    double          cat_conifers,
+    double          cat_hardwoods, 
+    double          ca_shrubs,
+    double          ca_conifers,
+    double          ca_hardwoods,
+	double          h20_holding_capacity,
+    double          *pred_d6_growth,
+    double          *coeffs_ptr,
+    unsigned long   plant_type);
+
+//	     dghat  = exp(b0
+//             + b1 * log(hghat1)
+//             + b2 * cw^0.5
+//             + b3 * d11
+//             + b4 * (catcon)^2
+//             + b5 * (cathwsh)^2
+//             + b6 * log(SRT))
+
+void swo_hybrid_calc_dbh_growth(   
+    unsigned long   *return_code,
+    double          total_height,
+    double          height_growth,
+    double          crown_ratio,
+    double          current_dbh,
+    double          current_d6,
+    double          d6_growth,
+    double          *pred_dbh_growth,
+    double          *coeffs_ptr );
+
+void swo_hybrid_calc_height_growth(
+	unsigned long   *return_code,	
+    double          total_height, 
+    double          crown_ratio,
+    double          d6_area,
+    double          precip, 
+    double          h20_holding_capacity,
+    double          slope,
+    double          aspect,
+    double          cacon,
+    double          catcon,
+    double          cahw,
+    double          cash,
+    double          cathw,
+	double          catsh,
+	double          basal_d,
+    double          elevation,
+    double          random_norm_0_1,
+    double          random_unif_0_1a,
+    double          random_unif_0_1b,
+    long            ind_random,
+    double          prob_browse,
+    double          prob_top_damage,
+    unsigned long   use_precip, 
+    
+	double			min_temp,		/* species specific minumum temperature, in C	*/
+	double			max_temp,		/* species specific maximum temperature, in C	*/
+	double			opt_temp,		/* species specific optimal temperature, in C	*/
+	double			*tday_c,		/* tday_c is a vector of monthly temps, in C	*/
+	double			*srad,			/* solar radiation, vector[12]					*/
+
+    double          *height_growth,
+    double          *coeffs_ptr,
+	unsigned long   plant_type);
+
+void swo_hybrid_calc_cr_growth(
+    unsigned long   *return_code,
+    int             hcb_growth_on,
+    double          total_height,
+    double          height_growth,
+    double          crown_ratio,
+    double          conifer_ca,
+    double          hardwood_ca,
+    double          shrub_ca,
+    double          uniform_0_1,
+    double          *cr_growth,
+    double          *coeffs_ptr );
+
+
+void swo_hybrid_calc_cw_growth(   
+	unsigned long   *return_code,
+	double          total_height,
+	double		    height_growth,
+	double		    crown_width,
+	double		    ca_conifers,
+	double		    ca_hardwoods,
+	double		    ca_shrubs,
+	double		    catcon,
+	double		    unif_0_1,
+	double          *pred_cw_growth,
+	double          *coeffs_ptr,
+    unsigned long   plant_type);
+
+
+
+void swo_hybrid_calc_endemic_mortality(   
+    unsigned long   *return_code,
+    double          expansion_factor,
+    double          *pred_mortality,
+    double          *coeffs_ptr );
+
+
+
+
+/********************************************************************************/
+/* swohybrid_impute                                                             */
+/********************************************************************************/
+/*  Description :   This function fills in the missing values for the plant     */
+/*                  list. This function makes two passes. The first pass fills  */
+/*                  in the missing dbh,d6, and height then calculated the       */
+/*                  plot level stats and plant values in taller variables       */
+/*                  before making the second pass to fill in crown ratio.       */
+/*                  This is a complete rewrite of fill_in_missing_values.       */
+/*  Author      :   Jeff D. Hamann                                              */
+/*  Date        :   September 12, 1999                                          */
+/*  Returns     :   void                                                        */
+/*  Comments    :   NONE                                                        */
+/*  Arguments   :   unsigned long *return_code  - pointer to a return code      */
+/*                  unsigned long n_plants      - total number fo plants in the */
+/*                      plants pointer array                                    */
+/*                  struct PLANT_RECORD *plants_ptr - array of plants in the    */
+/*                      sample to be projected                                  */
+/*                  struct PLOT_RECORD  *plot_ptr   - pointer to the current    */
+/*                      plot that is to be grown                                */
+/*                  unsigned long n_species - size of the species_ptr           */
+/*                  struct SPECIES_RECORD   *species_ptr - array of             */
+/*                      SPECIES_RECORD's that hold species specific information */
+/*                  unsigned long   n_coeffs - sizes of the coeffs_ptr array    */
+/*                  struct COEFFS_RECORD *coeffs_ptr - array of coefficients    */
+/*                      that are used to project the individual plants on the   */
+/*                      plot.                                                   */
+/*                  unsigned long   variant                                     */
+/********************************************************************************/
+void swohybrid_impute( 
+			    unsigned long           *return_code,
+			    unsigned long           n_species,
+			    struct SPECIES_RECORD   *species_ptr,
+			    unsigned long           n_coeffs,
+			    struct COEFFS_RECORD    *coeffs_ptr,
+			    unsigned long           variant,
+			    unsigned long           n_plants,
+			    struct PLANT_RECORD     *plants_ptr,
+			    unsigned long           n_points,
+			    struct PLOT_RECORD      *plots_ptr,
+			    double                  fixed_plot_radius,
+			    double                  min_dbh,
+			    double                  baf )
+{
+
+  unsigned long   i;
+  struct  PLANT_RECORD    *plant_ptr = NULL;
+  struct  PLOT_RECORD     *plot_ptr = NULL;
+  struct  COEFFS_RECORD   *c_ptr = NULL;
+  unsigned long   error_count = 0;
+
+//  double  bait[PLANT_TYPES];
+//  double  cait[PLANT_TYPES];
+
+//  double        cait_c;
+//  double        cait_h;
+//  double        cait_s;
+
+  error_count  = 0;
+  *return_code = CONIFERS_SUCCESS;
+
+  /* first check to make sure there are plants in the array */
+  if( n_plants <= 0 || plants_ptr == NULL ) 
+    {
+      *return_code = INVALID_PLANT_COUNT;
+      return;
+    }
+
+  /* first check to make sure there are plants in the array */
+  if( n_points <= 0 || plots_ptr == NULL ) 
+    {
+      *return_code = INVALID_PLOT_COUNT;
+      return;
+    }
+
+  /* FIRST PASS */
+  /* make a first pass to calculate the basic data for the plants */
+  /* fill in missing dbh, d6, and total heights */
+  plant_ptr = &plants_ptr[0];
+  for( i = 0; i < n_plants; i++, plant_ptr++ )
+    {
+
+      plant_ptr->errors = E_OKDOKEY; /* default value for error is set=ok */ 
+
+      c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+      /* don't go any further if you don't have a functional species code */
+      if( c_ptr == NULL )
+	{
+	  plant_ptr->errors |= E_INVALID_SPECIES;
+	  error_count += 1;
+	  continue;
+	}
+
+      /* only fill in missing values for stocked plots */
+      if( is_non_stocked( c_ptr ) )
+	{
+	  continue;
+	}
+
+      /* if the stem is all below d6  */
+      if( plant_ptr->tht < 0.50 && !is_non_stocked( c_ptr ) )
+	{        
+	  plant_ptr->errors |= E_INVALID_HEIGHT;
+	  error_count += 1;
+	}
+
+      /* if the total height <= 4.5 and there's a dbh obs */
+      /* this error triggers on plants that are exactly 4.5 feet tall */
+	/* and have a positive dbh observation                          */
+	if( plant_ptr->tht < 4.5 && plant_ptr->dbh > 0.0 )
+	  {
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
+	  }
+
+	/* if it's a tree with a dbh obs */
+	if(!is_tree( c_ptr) && plant_ptr->dbh > 0.0)
+	  {
+	    plant_ptr->errors |= E_INVALID_DBH;
+	    error_count += 1;
+	  }
+
+
+	/* if the plant doesn't have a dbh, fill that in    */ 
+	/* if the stem is between 6" and 4.5 feet tall      */
+	if( plant_ptr->tht >= 0.50 )
+	  {
+	    if( is_tree( c_ptr ) )
+	      {
+		if( plant_ptr->d6 == 0.0 )
+		  {
+		    if(plant_ptr->dbh > 0.0 && plant_ptr->tht >4.5)
+		      {
+			*return_code = CONIFERS_SUCCESS;
+			
+			      swo_hybrid_calc_d6_from_ht_and_dbh(return_code,
+								 plant_ptr->tht,
+								 plant_ptr->dbh,
+								 &plant_ptr->d6,
+								 c_ptr->d6_ht_dbh);
+			    
+			    if( *return_code != CONIFERS_SUCCESS)
+			      {
+				    plant_ptr->errors |= E_INVALID_D6;
+				    error_count += 1;
+			      }
+		      }
+		    else
+		      {
+		          /* if the dbh != 0 and tht < 4.5? */
+			    *return_code = CONIFERS_SUCCESS;
+
+			      swo_hybrid_calc_d6_from_total_height(  return_code, 
+								     plant_ptr->tht, 
+								     &plant_ptr->d6, 
+								     c_ptr->d6_ht);
+			    
+			    if( *return_code != CONIFERS_SUCCESS)
+			      {
+				plant_ptr->errors |= E_INVALID_D6;
+				error_count += 1;
+			      }
+		      }
+		  }
+
+
+          /* this is the code for computing the missing dbh when the tree */
+          /* is taller than 4.5 feet                                        */
+          /* if the plant record has a missing d12 and the total height is > 30 CM */
+          /* this only applies to the CONIFERS_CIPS variant */
+		if( plant_ptr->d12 == 0.0 && plant_ptr->tht > ( 30.0 * CM2FT ) )
+		{
+		    *return_code = CONIFERS_SUCCESS;
+            
+            //switch (variant)
+			//{
+			//    case CONIFERS_CIPS:
+            //        plot_ptr = get_plot( plant_ptr->plot, n_points, plots_ptr );
+            //        cips_calc_d12_from_ht_and_veg_cov(  return_code,
+			//                    plant_ptr->tht,
+			//                    plot_ptr->shrub_pct_cover,
+			//                    &plant_ptr->d12,
+			//                    c_ptr->dbh_ht_veg_cov );
+            //        break;
+			//	    
+            //    default:
+            //        break;
+            //} 
+        }
+
+          /* this is the code for computing the missing dbh when the tree */
+          /* is taller than 4.5 feet                                        */
+		if( plant_ptr->d6 > 0.0 && plant_ptr->dbh == 0.0 && plant_ptr->tht > 4.5)
+		  {
+		    *return_code = CONIFERS_SUCCESS;
+		    
+			  swo_hybrid_calc_dbh_from_height_and_d6(return_code,
+								 plant_ptr->d6,
+								 plant_ptr->tht,
+								 &plant_ptr->dbh,
+								 c_ptr->d6_ht_dbh);
+			
+			if( *return_code != CONIFERS_SUCCESS)
+			  {
+			    plant_ptr->errors |= E_INVALID_DBH;
+			    error_count += 1;
+			  }
+        }
+
+		if(plant_ptr->expf <=0.0 && fixed_plot_radius > 0.0  )
+		  {
+		    if( plant_ptr->errors & E_INVALID_DBH)
+		      {
+			plant_ptr->expf = 0;
+			plant_ptr->errors |= E_INVALID_EXPF;
+			error_count += 1;
+		      }
+		    else if( plant_ptr->dbh > min_dbh )
+		      {
+			plant_ptr->expf = baf / (plant_ptr->dbh * plant_ptr->dbh * FC_I);
+		      }
+		    else
+		      {
+			plant_ptr->expf = SQ_FT_PER_ACRE / 
+			  ( fixed_plot_radius * fixed_plot_radius * MY_PI );
+		      }            
+
+		    /* multiply the expansion factor by the number of   */
+		    /* stems that this plant record represents          */
+		    plant_ptr->expf *= plant_ptr->n_stems;
+		  }
+	      }
+
+            /* if the plant is a shrub, then compute the d6 if it's missing */
+	      if( is_shrub( c_ptr ) )
+		{
+		  if( plant_ptr->d6 == 0.0 )
+		    {
+		      /* compute the d6 from the height */
+		      *return_code = CONIFERS_SUCCESS;
+		      
+			    swo_hybrid_calc_d6_from_total_height(  return_code, 
+								   plant_ptr->tht, 
+								   &plant_ptr->d6, 
+								   c_ptr->d6_ht);
+			  
+			  if( *return_code != CONIFERS_SUCCESS)
+			    {
+			      plant_ptr->errors |= E_INVALID_D6;
+			      error_count += 1; 
+			    }
+		    }
+
+		}
+
+	  }
+
+	/* fill in the remaining values */
+	plant_ptr->d6_area      = plant_ptr->d6 * plant_ptr->d6 * FC_I;
+	plant_ptr->basal_area   = plant_ptr->dbh * plant_ptr->dbh * FC_I;
+    plant_ptr->d12_area      = plant_ptr->d12 * plant_ptr->d12 * FC_I;
+	    
+
+	    /* now calculate the crown width for the plant record */
+	    if( plant_ptr->crown_width <= 0.0 )
+	      {
+		*return_code = CONIFERS_SUCCESS;
+		
+		      swo_hybrid_calc_crown_width(   return_code,
+						     plant_ptr->d6_area,
+						     plant_ptr->tht,
+						     &plant_ptr->crown_width,
+						     &plant_ptr->crown_area,
+						     c_ptr->crown_width );
+		    
+		    if( *return_code != CONIFERS_SUCCESS)
+		      {
+			plant_ptr->errors |= E_INVALID_CW;
+			error_count += 1;
+		      }
+	      }
+
+	    /*  MOD033  */
+	    /* this should happen no matter what... */
+	    plant_ptr->crown_area = plant_ptr->crown_width * plant_ptr->crown_width * MY_PI / 4.0;
+
+	    /* fill in the expansion factors for those plant records    */
+	    /* that don't have one filled in by using the sample        */
+	    /* design records. Mostly, shrubs will have the expf filled */
+	    /* by calling this function, but it should work for trees   */
+	    if( plant_ptr->expf <= 0.0 )
+	      {
+		
+		    swo_hybrid_calc_exp_from_cover_and_ca( return_code,
+							   plant_ptr->pct_cover,
+							   plant_ptr->crown_area,
+							   &plant_ptr->expf );
+
+            if( *return_code != CONIFERS_SUCCESS)
+		    {
+		      plant_ptr->errors |= E_INVALID_EXPF;
+		      error_count += 1;
+		    }
+
+	      }
+    
+    }
+
+  calc_plot_stats_2(    return_code, 
+			n_species,
+			species_ptr,
+			n_coeffs,
+			coeffs_ptr,
+			n_plants,
+			plants_ptr,
+			n_points,
+			plots_ptr );
+
+    /* todo: need_error_trap_here */
+
+    /* SECOND PASS */
+    /* The second pass is required becuase the crown values are */
+    /* dependent on the basic plot summary statistics which are */
+    /* calculated for the plot before hand                      */
+    /* now make the second pass */
+    //error_count  = 0;
+    plant_ptr = &plants_ptr[0];
+    for( i = 0; i < n_plants; i++, plant_ptr++ )
+      {
+
+	c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+
+	/* don't go any further if you don't have a functional species code */
+	if( c_ptr == NULL )
+	  {
+	    continue;
+	  }
+
+	/* set the pointer for the current plot that the plant is on */
+	plot_ptr = get_plot( plant_ptr->plot, n_points, plots_ptr );
+        
+	/* fill in the percent cover for the plant recor */
+	if( plant_ptr->pct_cover == 0.0)  /* fill in percent cover */
+	  {
+	    plant_ptr->pct_cover = 100.0 * plant_ptr->expf * plant_ptr->crown_area / SQ_FT_PER_ACRE;
+	  }
+
+	/* if the crown ratio is invalid or missing     */
+	/* fill in the crown ratio for the plant record */
+	if( is_tree( c_ptr ) )
+	  {
+	    if( plant_ptr->cr <= 0.0 || plant_ptr->cr > 1.0 )
+	      {
+
+		        //get_in_taller_attribs( plant_ptr, plot_ptr, bait, cait );
+		        //cait_c       =   cait[CONIFER];
+		        //cait_h       =   cait[HARDWOOD];
+		        //cait_s       =   cait[SHRUB];
+		        //*return_code = CONIFERS_SUCCESS;
+
+		      swo_hybrid_calc_crown_ratio(return_code,  
+						  plant_ptr->tht,
+						  plant_ptr->d6,
+						  &plant_ptr->cr,
+						  c_ptr->crown_ratio);
+	      }                              
+	  }
+
+	if( *return_code != CONIFERS_SUCCESS)
+	  {
+	    plant_ptr->errors |= E_INVALID_CR;
+	    error_count += 1;
+	  }
+
+	plant_ptr->max_crown_width = 0.0;
+
+	/*  MOD014 */
+	  /* if it's a tree, compute the crown width */
+	  if( is_tree( c_ptr ) )
+	    {
+	      *return_code = CONIFERS_SUCCESS;
+	      
+		    swo_hybrid_calc_max_crown_width(  return_code,
+						      plant_ptr->dbh,
+						      plant_ptr->tht,
+						      &plant_ptr->max_crown_width,
+						      c_ptr->max_crown_width);
+     
+		  if( *return_code != CONIFERS_SUCCESS)
+		    {
+		      plant_ptr->errors |= E_INVALID_MCW;   
+		      error_count += 1;
+		    }
+	    }
+      }
+   
+    if (error_count > 0)
+      {
+	*return_code = FILL_VALUES_ERROR;
+	return;
+      }
+    *return_code = CONIFERS_SUCCESS;
+
+}
+
+
+/********************************************************************************/
+/* swo_hybrid_project_plant                                                     */
+/********************************************************************************/
+/*  Description :   This function compute the plant growth for one year.        */
+/*  Author      :   Jeff D. Hamann                                              */
+/*  Date        :   September 12, 1999                                          */
+/*  Returns     :   void                                                        */
+/*  Comments    :   updated values are height_growth, d6_growth, dbh_growth,    */
+/*                  crown_ratio_growth, crown_width_growth, and max_crown_width */
+/*  Arguments   :   unsigned long *return_code  - pointer to a return code      */
+/*                  unsigned long n_plants      - total number fo plants in the */
+/*                      plants pointer array                                    */
+/*                  struct PLANT_RECORD *plants_ptr - array of plants in the    */
+/*                      sample to be projected                                  */
+/*                  struct PLOT_RECORD  *plot_ptr   - pointer to the current    */
+/*                      plot that is to be grown                                */
+/*                  unsigned long n_species - size of the species_ptr           */
+/*                  struct SPECIES_RECORD   *species_ptr - array of             */
+/*                      SPECIES_RECORD's that hold species specific information */
+/*                  unsigned long   n_coeffs - sizes of the coeffs_ptr array    */
+/*                  struct COEFFS_RECORD *coeffs_ptr - array of coefficients    */
+/*                      that are used to project the individual plants on the   */
+/*                      plot.                                                   */
+/********************************************************************************/
+void swo_hybrid_project_plant(  
+   unsigned long           *return_code,
+   unsigned long           n_species,
+   struct SPECIES_RECORD   *species_ptr,
+   unsigned long           n_coeffs,
+   struct COEFFS_RECORD    *coeffs_ptr,
+   struct PLANT_RECORD     *plant_ptr,
+   struct PLOT_RECORD      *plot_ptr,
+   unsigned long           endemic_mortality,  
+   int                     hcb_growth_on,      
+   unsigned long           use_precip_in_hg,   
+   unsigned long           use_rand_err )
+{
+
+   struct COEFFS_RECORD    *c_ptr;
+   double                  awi;
+
+   /* tree level stats */
+   double  bat_total;
+   double  bat_c;
+   double  bat_h;
+   double  bat_s;
+   double  bat_c_h;
+   double  cat_c;
+   double  cat_h;
+   double  cat_s;
+   double  new_d6_area;
+   double  new_d12_area;
+
+/*    unsigned long htidx = 0; */
+
+   double  normal;
+   double  browse_random_unif_0_1;
+   double  top_dam_random_unif_0_1;
+
+   double  bait[PLANT_TYPES];
+   double  cait[PLANT_TYPES];
+    
+   /* get the supporting structures for the plant */
+   c_ptr = &coeffs_ptr[species_ptr[plant_ptr->sp_idx].fsp_idx];
+
+   /* don't go any further if you don't    */
+   /* have a functional species code       */
+   if( c_ptr == NULL )
+   {
+      *return_code = CONIFERS_ERROR;
+      return;
+   }
+
+//   Rprintf( "%s, %d\n", __FILE__, __LINE__ );
+
+   /* get a uniform deviate for the browse */
+   /* and one for the top damage           */
+   normal                  = (double)gauss_dev();  
+   browse_random_unif_0_1  = uniform_0_1();
+   top_dam_random_unif_0_1 = uniform_0_1();
+
+   /* calc the height growth...        */
+   /* calc diam growth...              */
+   /* calc crown recession...          */
+   /* calc mortality...                */
+   awi         =   plot_ptr->water_capacity * log( plot_ptr->mean_annual_precip );
+
+    get_in_taller_attribs( plant_ptr, 
+                            plot_ptr, 
+                            bait, 
+                            cait );
+
+   bat_c       =   bait[CONIFER];
+   bat_h       =   bait[HARDWOOD];
+   bat_s       =   bait[SHRUB];
+
+   cat_c       =   cait[CONIFER];
+   cat_h       =   cait[HARDWOOD];
+   cat_s       =   cait[SHRUB];
+
+   bat_c_h     =   bat_c + bat_h;
+   bat_total   =   bat_c + bat_h + bat_s;
+
+   plant_ptr->tht_growth = 0.0;
+   plant_ptr->d6_growth  = 0.0;
+   plant_ptr->d12_growth  = 0.0;
+
+
+   plant_ptr->cw_growth  = 0.0;
+   plant_ptr->cr_growth  = 0.0;
+   plant_ptr->dbh_growth = 0.0;
+   plant_ptr->expf_change= 0.0;
+
+	if( is_tree( c_ptr ) || is_shrub( c_ptr) )
+	{
+
+		/* coded jdh, july 31, 2011 */
+		swo_hybrid_calc_height_growth( return_code,
+			                plant_ptr->tht, 
+			                plant_ptr->cr,
+			                plant_ptr->d6_area,
+			                
+							/* the precip in the swohybrid model is *NOT* the	*/
+							/* mean_annual_precip, but the growing season		*/
+							/* precip, which includes only March, April,		*/
+							/* and May.											*/
+							//plot_ptr->mean_annual_precip, 
+			                plot_ptr->growing_season_precip,
+							
+							plot_ptr->water_capacity,
+			                plot_ptr->slope,
+			                plot_ptr->aspect,
+						
+			                plot_ptr->ca_c,
+			                cat_c,
+
+			                plot_ptr->ca_h,         
+			                plot_ptr->ca_s,         
+            
+			                cat_h,
+			                cat_s,
+
+			                plant_ptr->d6,
+			                plot_ptr->elevation,
+			                normal,                   
+			                browse_random_unif_0_1,   
+			                top_dam_random_unif_0_1,  
+			                use_rand_err,         
+
+			                species_ptr[plant_ptr->sp_idx].browse_damage,
+			                species_ptr[plant_ptr->sp_idx].mechanical_damage,
+
+			                use_precip_in_hg,     
+
+							/* added arguments for the hybrid model */
+			                species_ptr[plant_ptr->sp_idx].min_temp,
+			                species_ptr[plant_ptr->sp_idx].max_temp,
+			                species_ptr[plant_ptr->sp_idx].opt_temp,
+							
+							/* added plot level args for the radiation */
+							plot_ptr->mean_monthly_temp,
+			                plot_ptr->solar_radiation,
+
+			                &plant_ptr->tht_growth,
+			                c_ptr->ht_growth,
+			                c_ptr->type); 
+
+        if( *return_code != CONIFERS_SUCCESS )
+        {
+
+	        return;
+        }
+
+	}
+
+
+	if( is_tree( c_ptr ) || is_shrub( c_ptr))
+	{
+
+		/* does this function have meaning here?				*/
+		/* does it use the same equation as the swo variant???	*/
+		swo_hybrid_calc_d6_growth(	return_code,
+						plant_ptr->tht_growth,
+						plant_ptr->crown_width,
+						plant_ptr->tht,
+						plant_ptr->d6,
+                        cat_s,
+						cat_c,
+						cat_h,
+						plot_ptr->ca_s,
+						plot_ptr->ca_c,
+						plot_ptr->ca_h,
+						plot_ptr->water_capacity,
+						&plant_ptr->d6_growth,
+						c_ptr->d6_growth,
+						c_ptr->type);
+
+		if( *return_code != CONIFERS_SUCCESS )
+        {
+	         return;
+        }
+
+	}
+   /* predict the new dbh from     */
+   /* the new d6 and total height  */
+   if( is_tree( c_ptr ) )
+   {
+	   swo_hybrid_calc_dbh_growth(  return_code,
+									plant_ptr->tht,
+									plant_ptr->tht_growth,
+                                    plant_ptr->cr,
+                                    plant_ptr->dbh,
+                                    plant_ptr->d6,
+                                    plant_ptr->d6_growth,
+									&plant_ptr->dbh_growth,
+									c_ptr->dbh_growth );
+
+      if( *return_code != CONIFERS_SUCCESS )
+      {
+		return;
+      }
+            
+      /* calculate the new crown ratio and    */
+      /* calculate the difference             */
+	  /* is this function valid anymore?		*/
+      swo_hybrid_calc_cr_growth(   return_code,
+			            hcb_growth_on,                
+			            plant_ptr->tht,
+			            plant_ptr->tht_growth,
+			            plant_ptr->cr,
+			            plot_ptr->ca_c,
+			            plot_ptr->ca_h,
+			            plot_ptr->ca_s,
+			            uniform_0_1(),
+			            &plant_ptr->cr_growth,
+			            c_ptr->cr_growth);
+
+      if( *return_code != CONIFERS_SUCCESS )
+      {
+	    return;
+      }
+
+      swo_hybrid_calc_max_crown_width( return_code,
+			                plant_ptr->dbh + plant_ptr->dbh_growth,
+			                plant_ptr->tht + plant_ptr->tht_growth,
+			                &plant_ptr->max_crown_width,
+			                c_ptr->max_crown_width);
+
+      if( *return_code != CONIFERS_SUCCESS )
+      {
+	    return;
+      }
+
+
+
+   }
+
+   /* calculate the new crown area for     */
+   /* the plant record...  need to calc    */
+   /* a temp new d6 area, total height,    */
+   /* and crown width                      */
+   new_d6_area = plant_ptr->d6 * plant_ptr->d6 * FC_I;
+   new_d12_area = plant_ptr->d12 * plant_ptr->d12 * FC_I;
+   
+   
+   if( is_tree( c_ptr ) || is_shrub( c_ptr))
+   {
+
+//  crown width growth hat
+//  cwghat = (c0 + c2*(cw^0.5))*(hghat1)^c1
+
+		swo_hybrid_calc_cw_growth( return_code,
+				        plant_ptr->tht,
+				        plant_ptr->tht_growth,
+				        plant_ptr->crown_width,    
+	                    plot_ptr->ca_c,
+				        plot_ptr->ca_h,
+					    plot_ptr->ca_s,
+					    cat_c,
+				        uniform_0_1(),
+				        &plant_ptr->cw_growth,
+					    c_ptr->cw_growth,
+                        c_ptr->type);
+
+        if( *return_code != CONIFERS_SUCCESS )
+        {
+	       return;
+        }
+   }
+
+   if( endemic_mortality == 1 )    
+   {
+
+      swo_hybrid_calc_endemic_mortality(	return_code,
+										  plant_ptr->expf,
+										  &plant_ptr->expf_change,
+										  &species_ptr[plant_ptr->sp_idx].endemic_mortality);
+
+      if( *return_code != CONIFERS_SUCCESS )
+      {
+		return;
+      }
+   }
+
+
+   *return_code = CONIFERS_SUCCESS;
+
+}
+
 
 
 /********************************************************************************/
@@ -82,7 +999,7 @@
 /*  Source  : Uzoh and Ritchie 1996 PSW RP 227                                  */
 /*  Coeffs  : CW   may need to add b3 due to minor LOF probs with df            */
 /********************************************************************************/
-void calc_crown_width( 
+void swo_hybrid_calc_crown_width( 
     unsigned long   *return_code,
     double          d6_area,
     double          total_height,
@@ -95,60 +1012,58 @@ void calc_crown_width(
     double  b1;
     double  b2;
 
-        /* check for valid height */
-        if(total_height <= 0.0)
-        {
-            *return_code = INVALID_INPUT_VAL;
-            *pred_crown_width = 0.0;
-            *pred_crown_area  = 0.0;
-            return;
-        }
-        /* check for valid coefficients */
-        if( coeffs_ptr == NULL )
-        {
-            /* MOD002   */
-            *return_code = INVALID_COEFF;
-            *pred_crown_width   = 0.0;
-            *pred_crown_area    = 0.0;
-            return;
-        }
+    /* check for valid height */
+    if(total_height <= 0.0)
+    {
+        *return_code = INVALID_INPUT_VAL;
+        *pred_crown_width = 0.0;
+        *pred_crown_area  = 0.0;
+        return;
+    }
+    /* check for valid coefficients */
+    if( coeffs_ptr == NULL )
+    {
+        /* MOD002   */
+        *return_code = INVALID_COEFF;
+        *pred_crown_width   = 0.0;
+        *pred_crown_area    = 0.0;
+        return;
+    }
 
-        b0 = coeffs_ptr[0];
-        b1 = coeffs_ptr[1];
-        b2 = coeffs_ptr[2];
+    b0 = coeffs_ptr[0];
+    b1 = coeffs_ptr[1];
+    b2 = coeffs_ptr[2];
 
-        if( total_height < 0.51 )
-        {
-            *pred_crown_width = 0.25;
-            *pred_crown_area  = 0.04908739;
-        }
-        else
-        {
-            /* MOD011 */
-/*            b1 = 1.0 - exp(total_height * b1);     */
-/*            new_crown_area =b0 * b1 * pow( d6_area, b2 );   */
+    if( total_height < 0.51 )
+    {
+        *pred_crown_width = 0.25;
+        *pred_crown_area  = 0.04908739;
+    }
+    else
+    {
 
-            /* MOD014  */
-            *pred_crown_area = exp( b0 + 
-                                    b1 * log( d6_area * 144.0 ) + 
-                                    b2 * log( total_height ) );
+        *pred_crown_area = exp( b0 + 
+                                b1 * log( d6_area * 144.0 ) + 
+                                b2 * log( total_height ) );
+
+		/* limit crown width to 60 feet */
 		if(*pred_crown_area > 2827.0)
 		{
-			*pred_crown_area = 2827.0; /* limit crown width to 60 feet */
+			*pred_crown_area = 2827.0; 
 		}
-            /* MOD003 */
-            *pred_crown_width = sqrt( *pred_crown_area * ONE_OVER_PI * 4.0); 
-        }
 
-        *return_code = CONIFERS_SUCCESS;
+		*pred_crown_width = sqrt( *pred_crown_area * ONE_OVER_PI * 4.0); 
+    }
 
-        /* MOD006   */
-        if( *pred_crown_width < 0.0 )
-        {
-            *pred_crown_width   = 0.0;
-            *pred_crown_area    = 0.0;
-            *return_code        = CONIFERS_ERROR;
-        }
+    *return_code = CONIFERS_SUCCESS;
+
+    if( *pred_crown_width < 0.0 )
+    {
+        *pred_crown_width   = 0.0;
+        *pred_crown_area    = 0.0;
+        *return_code        = CONIFERS_ERROR;
+    }
+
 }
 
 
@@ -178,7 +1093,7 @@ void calc_crown_width(
 /*  Coeffs  : MW                                                                */
 /********************************************************************************/
 
-void calc_max_crown_width( 
+void swo_hybrid_calc_max_crown_width( 
     unsigned long   *return_code,
     double          dbh,
     double          total_height,
@@ -227,6 +1142,7 @@ void calc_max_crown_width(
 }
 
 
+
 /********************************************************************************/
 /*                  calc_crown_ratio (not for shrubs..)   S3                    */
 /********************************************************************************/
@@ -249,7 +1165,7 @@ void calc_max_crown_width(
 /*  Source  : Ritchie May 2008                                                  */
 /*  Coeffs  : CR                                                                */
 /********************************************************************************/
-void calc_crown_ratio(
+void swo_hybrid_calc_crown_ratio(
     unsigned long *return_code,  
     double  total_height,
     double  d6,
@@ -332,7 +1248,7 @@ void calc_crown_ratio(
 /*  Coefficients: MS in coefficients file                                       */
 /*  coefficients last fit in October 1999                                       */
 /********************************************************************************/
-void calc_d6_from_total_height(       
+void swo_hybrid_calc_d6_from_total_height(       
     unsigned long   *return_code,
     double          total_height, 
     double          *pred_d6,
@@ -401,7 +1317,7 @@ void calc_d6_from_total_height(
 /*  Source  : Ritchie Static Height Diameter Equations,   S5                    */
 /*  Coeffs  : DH                                                                */
 /********************************************************************************/
-void calc_d6_from_ht_and_dbh(       
+void swo_hybrid_calc_d6_from_ht_and_dbh(       
     unsigned long   *return_code,
     double          total_height,
     double          dbh,
@@ -464,7 +1380,7 @@ void calc_d6_from_ht_and_dbh(
 /*  Source  :  Larsen and Hann (1987), RP-49                                    */
 /*  Coeffs  :  OD (params 0, 1, 2)                                              */
 /********************************************************************************/
-void calc_dbh_from_height(       
+void swo_hybrid_calc_dbh_from_height(       
     unsigned long   *return_code,
     double          total_height,
     double          *pred_dbh,
@@ -526,7 +1442,7 @@ void calc_dbh_from_height(
 /*  Source  : Ritchie, see d6_from_height_and_dbh                               */
 /*  Coeffs  : DH                                                                */
 /********************************************************************************/
-void calc_dbh_from_height_and_d6(       
+void swo_hybrid_calc_dbh_from_height_and_d6(       
     unsigned long   *return_code,
     double          d6,
     double          total_height,
@@ -588,7 +1504,7 @@ void calc_dbh_from_height_and_d6(
 /*  Source  : Me                                                                */
 /*  Coeffs  : none                                                              */
 /********************************************************************************/
-void calc_exp_from_cover_and_ca(
+void swo_hybrid_calc_exp_from_cover_and_ca(
     unsigned long   *return_code,
     double          pct_cover,
     double          crown_area,
@@ -641,7 +1557,7 @@ void calc_exp_from_cover_and_ca(
 /*  Source  :  Ritchie height diameter equations, inverted                      */
 /*  Coeffs  :  MS                                                               */
 /********************************************************************************/
-void calc_height_from_d6(       
+void swo_hybrid_calc_height_from_d6(       
     unsigned long   *return_code,
     double          d6,
     double          *pred_total_height,
@@ -709,7 +1625,7 @@ void calc_height_from_d6(
 /*  Source  : Hann and Larsen (1987)                                            */
 /*  Coeffs  : OD                                                                */
 /********************************************************************************/
-void calc_height_from_dbh(       
+void swo_hybrid_calc_height_from_dbh(       
     unsigned long   *return_code,
     double          dbh,
     double          *pred_total_height,
@@ -783,7 +1699,7 @@ void calc_height_from_dbh(
 /*  Source  : Ritchie 11/99: Preliminary                                        */
 /*  Coeffs  : ST                                                                */
 /********************************************************************************/
-void calc_nstems_from_cw_and_height(
+void swo_hybrid_calc_nstems_from_cw_and_height(
     unsigned long   *return_code,
     double          total_height,
     double          crown_width,
@@ -802,11 +1718,6 @@ void calc_nstems_from_cw_and_height(
     *return_code        = CONIFERS_ERROR;
     *pred_n_stems       = 1;
         
-/*   manzanita coefficients   */
-//    b0                  = 0.5281850;
-//    b1                  = 0.8916970;
-//    b2                  = -0.067543;
-//    b3                  = -0.121772;
     temp_stems          = 1.0;
     int_stems           = 1;
 
@@ -873,7 +1784,7 @@ void calc_nstems_from_cw_and_height(
 /*  Source  : Wensel, Kirklely                                                  */
 /*  Coeffs  : V4                                                                */
 /********************************************************************************/
-void calc_volume(
+void swo_hybrid_calc_volume(
     unsigned long   *return_code,
     double          total_height,
     double          dbh,
@@ -958,7 +1869,7 @@ void calc_volume(
 /*             Tappeiner, Harrington & Walstad (TH)                             */
 /*  Coeffs  : BM                                                                */
 /********************************************************************************/
-void calc_biomass(
+void swo_hybrid_calc_biomass(
     unsigned long   *return_code,
     double          total_height,
     double          basal_diameter,
@@ -1107,6 +2018,12 @@ void calc_biomass(
 }
 
 
+
+/********************************************************************************/
+/* Growth Models																*/
+/********************************************************************************/
+
+
 /********************************************************************************/
 /*                  calc_d6_growth          D1                                  */
 /********************************************************************************/
@@ -1114,7 +2031,7 @@ void calc_biomass(
 /*  Author      :   Martin W. Ritchie                                           */
 /*  Date        :   March 17, 2004                                              */
 /*  Returns     :   void                                                        */
-/*  Comments    :   refit by martin                                             */
+/*  Comments    :   copied from swo.model by jeff hamann                        */
 /*                  diameter growth for tree species...                         */
 /*                  dg_trees=(b0*hg**2)*exp(b2*cw +b3*d6                        */
 /*                            +b4*catcon +  b5*cathw + b6*catsh)                */
@@ -1144,9 +2061,9 @@ void calc_biomass(
 /********************************************************************************/
 /*  Formula : See above                                                         */ 
 /*  Source  : Ritchie 03/04                                                     */
-/*  Coeffs  : D3                                                                */
+/*  Coeffs  : d6_growth                                                         */
 /********************************************************************************/
-void calc_d6_growth(
+void swo_hybrid_calc_d6_growth(
 	unsigned long   *return_code,
     double          height_growth,
     double          crown_width,
@@ -1256,9 +2173,12 @@ void calc_d6_growth(
     {
         temp_cat_total = sum_cat/SQ_FT_PER_ACRE;
     }
+
 /**************************** this is now annual diameter growth for trees ***************************************/
 	if( plant_type == CONIFER || plant_type == HARDWOOD)
 	{
+		
+		/* these are from the original SWO model */
 	    b0  = coeffs_ptr[0];
 		b1  = coeffs_ptr[1];
 		b2  = coeffs_ptr[2];
@@ -1275,17 +2195,18 @@ void calc_d6_growth(
 		b13 = coeffs_ptr[13];
 		b14 = coeffs_ptr[14];
 		b15 = coeffs_ptr[15];
-
+/*  this is changed by mwr on  Sept 26, 2011 */
 		dg_trees =   pow(height_growth, b1)
 					*exp(   b0                           
-							+	b2 * sqrt(crown_width)      
+							+	b2 * pow(crown_width, b6)      
 							+	b3 * d6                     
 							+	b4 * (cat_conifers/SQ_FT_PER_ACRE)*(cat_conifers/SQ_FT_PER_ACRE)    
-							+	b5 * (cat_hardwoods/SQ_FT_PER_ACRE)*(cat_hardwoods/SQ_FT_PER_ACRE)  
-							+	b6 * (cat_shrubs/SQ_FT_PER_ACRE)*(cat_shrubs/SQ_FT_PER_ACRE)        
-							+	b7 * d6*d6);
+							+	b5 * ( (cat_hardwoods/SQ_FT_PER_ACRE)*(cat_hardwoods/SQ_FT_PER_ACRE)  
+							+	     + (cat_shrubs/SQ_FT_PER_ACRE)*(cat_shrubs/SQ_FT_PER_ACRE) )        
+								);
 
-		*pred_d6_growth = dg_trees ;
+		*pred_d6_growth = dg_trees;
+
 	}
 	else if(plant_type == SHRUB || plant_type == FORB)
 	{
@@ -1294,16 +2215,20 @@ void calc_d6_growth(
 		c2  = coeffs_ptr[2];
 		c3  = coeffs_ptr[3];
 		c4  = coeffs_ptr[4];
+
 		dg_shrubs =    (  c0                              
-                    + c1 * height_growth *2           
-                    + c2 * total_height               
-                    + c3 / (sqrt( temp_cat_total) )   
-                    + c4 * whc) / 2.0;
+						+ c1 * height_growth *2           
+						+ c2 * total_height               
+						+ c3 / (sqrt( temp_cat_total) )   
+						+ c4 * whc) / 2.0;
+		
 		if( dg_shrubs < 0.0 )
 		{
 			dg_shrubs = 0.0;
 		}
+		
 		*pred_d6_growth = dg_shrubs ;
+	
 	}
 	else
 	{
@@ -1316,34 +2241,47 @@ void calc_d6_growth(
     }
 }
 
-/*  MOD025   */
+
+
 /********************************************************************************/
-/*                  calc_dbh_growth        D2                                   */
+/*                  swo_hybrid_calc_dbh_growth									*/
 /********************************************************************************/
-/*  Description :   calc_dbh_growth                                             */   
-/*  Author      :   Martin W. Ritchie                                           */
-/*  Date        :   October 13, 1999                                            */
+/*  Description :   swo_hybrid_calc_dbh_growth                                  */   
+/*  Author      :   Martin W. Ritchie and Jeff D. Hamann						*/
+/*  Date        :   July 31, 2011												*/
 /*  Returns     :   void                                                        */
-/*  Comments    :   NONE                                                        */
+/*  Comments    :   reverted back to original Sept 2011                         */
 /*  Arguments   :                                                               */
 /*  return void                                                                 */
 /*  unsigned long *return_code      - return code for calling function to check */
 /*  double         total_height     - total tree height                         */
 /*  double         height_growth    - predicted height increment (annual)       */
-/*  double         crown_ratio      - crown ratio (currently not used)          */
-/*  double         current_dbh      - initial dbh (inches)                      */
-/*  double         current_d6       - initial d6 (inches)                       */
-/*  double         d6_growth        - predicted d6 growth (inches)              */
+/*  double         crown_width		- crown width (feet)						*/
+/*  double         catcon			- crown area in taller in conifers (ft^2)	*/
+/*  double         cathwsh			- crown area in taller hardwds+shrubs (ft^2)*/
+
+/*  double         min_temp			- min temp for phtotosynthasis				*/
+/*  double         max_temp			- max temp for phtotosynthasis				*/
+/*  double         opt_temp			- opt temp for phtotosynthasis				*/
+/*  double         tday_c			- vector total number of growing days (above C)	*/
+/*  double         srad				- vector solar radation						*/
 /*  double         *pred_dbh_growth - predicted dbh growth (inches)             */
 /*  vector<double> *coeffs_ptr      -   pointer to a vector of doubles that     */
 /*                                      contain the coefficients for the        */
 /*                                      functional species code                 */
 /********************************************************************************/
-/*  Formula : dbhgro = d6gro * (b0 + exp(b1 + b2 * height))                     */ 
+/*  Formula :																	*/ 
+/*	     dghat  = exp(b0														*/
+/*             + b1 * log(hghat1)												*/
+/*             + b2 * cw^0.5													*/
+/*             + b3 * basal_diameter (d6)										*/
+/*             + b4 * (catcon)^2												*/
+/*             + b5 * (cathwsh)^2												*/
+/*             + b6 * log(SRT))													*/
 /*  Source  :                                                                   */
-/*  Coeffs  : static  coeffs number 7 d6=f( h dbh)                              */
+/*  Coeffs  :																	*/
 /********************************************************************************/
-void calc_dbh_growth(   
+void swo_hybrid_calc_dbh_growth(   
     unsigned long   *return_code,
     double          total_height,
     double          height_growth,
@@ -1402,6 +2340,7 @@ void calc_dbh_growth(
 }
 
 
+
 /********************************************************************************/
 /*                  calc_height_growth        D3                                */
 /********************************************************************************/
@@ -1448,7 +2387,7 @@ void calc_dbh_growth(
 /*  Source  : Ritchie Fit 11/1999; 04/2000; 12/2001; 08/2006                    */
 /*  Coeffs  : HG                                                                */
 /********************************************************************************/
-void calc_height_growth(
+void swo_hybrid_calc_height_growth(
 	unsigned long   *return_code,	
     double          total_height, 
     double          crown_ratio,
@@ -1471,15 +2410,25 @@ void calc_height_growth(
     long            ind_random,
     double          prob_browse,
     double          prob_top_damage,
-    unsigned long   use_precip,     
+    unsigned long   use_precip, 
+    
+	double			min_temp,		/* species specific minumum temperature, in C	*/
+	double			max_temp,		/* species specific maximum temperature, in C	*/
+	double			opt_temp,		/* species specific optimal temperature, in C	*/
+	double			*tday_c,		/* tday_c is a vector of monthly temps, in C	*/
+	double			*srad,			/* solar radiation */
+
     double          *height_growth,
     double          *coeffs_ptr,
 	unsigned long   plant_type)
 {
 
 /****************************  right now b25 and b26 are spares ******************************************/
-    double  b0,  b1,  b2,  b3,  b4,  b5,  b6,  b7,  b8,  b9,
-            b10, b11, b12, b13, b14, b15 ;
+    double  a0,  a1,  a2,  a3,  a4,  a5,  a6,  a7,  a8,  a9, a10;
+
+	
+	/* these are for the browse and damage? */
+	double				b10, b11;
 
     double  whc;
 	double  height_var;
@@ -1488,6 +2437,20 @@ void calc_height_growth(
     int     browsing;
     double  cat;
     double  temp_growth;
+
+	/* temp variables for development */
+	//double	monthly_temp = 20.0;
+	double	power_term;				/* another temp number	*/
+	double	t1num;					/* temp number?			*/
+	double	t2num;					/* temp number?			*/
+	//double	tday_c;					/* which is what?		*/
+	double	gspcp;					/* which is what?		*/
+	double	SRT;					/* which is what?		*/
+	double	tmod[12];					/* which is what?		*/
+	
+	double	hcb1;
+
+	unsigned long	i;
 
 /**************************** initialize variables *******************************************************/
 	*return_code=CONIFERS_SUCCESS;
@@ -1498,6 +2461,7 @@ void calc_height_growth(
 		*return_code   = CONIFERS_ERROR;
         return;
     }
+
 /*************************** check for some errors *******************************************************/
     if( total_height < 0.0)
     {
@@ -1511,6 +2475,7 @@ void calc_height_growth(
         *height_growth = 0.20;
 		return;
     }
+
 /*********************************************************************************************************/
 	*height_growth   = 0.0;                               /* set to zero for default                     */
     temp_growth      = 0.0;
@@ -1521,28 +2486,28 @@ void calc_height_growth(
 
 	height_for_error = total_height;
 
-    b0                  = 0.0;
-    b1                  = 0.0;
-    b2                  = 0.0;
-    b3                  = 0.0;
-    b4                  = 0.0;
-    b5                  = 0.0;
-    b6                  = 0.0;
-    b7                  = 0.0;
-    b8                  = 0.0;
-    b9                  = 0.0;
-    b10                 = 0.0;
-    b11                 = 0.0;
-    b12                 = 0.0;
-    b13                 = 0.0;
-    b14                 = 0.0;
-    b15                 = 0.0;
+    a0                  = 0.0;
+    a1                  = 0.0;
+    a2                  = 0.0;
+    a3                  = 0.0;
+    a4                  = 0.0;
+    a5                  = 0.0;
+    a6                  = 0.0;
+    a7                  = 0.0;
+    a8                  = 0.0;
+    a9                  = 0.0;
+    a10                 = 0.0;
     
+
     broken              = 0;
     browsing            = 0;
 
-    cat = (catcon+cathw+catsh)/SQ_FT_PER_ACRE;
+	SRT = 0.0;
 
+	memset( tmod, 0, sizeof( double ) * 12 );
+	
+
+    cat = (catcon+cathw+catsh)/SQ_FT_PER_ACRE;
 
 
 /****************************** set up the browse coefficient (indicator) ***********************************/
@@ -1590,30 +2555,92 @@ void calc_height_growth(
 	{
 		height_var = 0.0;                                         /*   if large positive, set to .0      */
 	}
+
 /**********************  make sure that log of crown ratio doesn't go goofy **********************/
     if ( crown_ratio < 0.01 )
     {
         crown_ratio = 0.01;
     }
-    if (plant_type == CONIFER || plant_type == HARDWOOD) 
-    {
-		b0  = coeffs_ptr[0];
-		b1  = coeffs_ptr[1]  * whc;
-		b2  = coeffs_ptr[2]  * log(precip);                        /* Not in the model now b2 should=0     */
-		b3  = coeffs_ptr[3]  * log (total_height);
-		b4  = coeffs_ptr[4]  * pow(total_height, 1.50);                
-		b5  = coeffs_ptr[5]  * log(crown_ratio);                       
-		b6  = coeffs_ptr[6]  * (catcon/SQ_FT_PER_ACRE)*(catcon/SQ_FT_PER_ACRE);
-		b7  = coeffs_ptr[7]  *  (cahw/SQ_FT_PER_ACRE) * (cahw/SQ_FT_PER_ACRE);
-		b8  = coeffs_ptr[8]  *  (cash/SQ_FT_PER_ACRE) * (cash/SQ_FT_PER_ACRE);
-		b9  = coeffs_ptr[9]  * (sqrt(height_for_error/2.0) * height_var);
-		b10 = (double)coeffs_ptr[10] * (double)broken;
-		b11 = (double)coeffs_ptr[11] * (double)browsing;
-		b12 = coeffs_ptr[12] * (1.0 / total_height)  ;                         
-		b13 = coeffs_ptr[13] * height_var / sqrt(2.0);             /*  alternate constant error structure   */
-                                                                   /* currently unused here                 */
 
-        temp_growth =  b12 + exp(b0 + b1 + b3 + b4 + b5 + b6 + b7 + b8) + (b9 + b13);
+    if( plant_type == CONIFER || plant_type == HARDWOOD ) 
+    {
+				
+		//## parameter  for DF
+		//a0=  -1.79173;
+		//a1=   0.041419;
+		//a2=  0.736826;
+		//a3=  -0.02037;
+		//a4=   0.533997;
+		//a5=  -0.17748;
+		//a6=  -0.16519;
+		//a8=   0.014363;
+		//a9=   0.230168;
+
+		a0          = coeffs_ptr[0];
+		a1          = coeffs_ptr[1];
+		a2          = coeffs_ptr[2];
+		a3          = coeffs_ptr[3];
+		a4          = coeffs_ptr[4];
+		a5          = coeffs_ptr[5];
+		a6          = coeffs_ptr[6];
+		a7          = coeffs_ptr[7];
+		a8          = coeffs_ptr[8];
+		a9          = coeffs_ptr[9];
+        a10         = coeffs_ptr[10];
+	/* for now, just comment these out */
+	b10 = (double)coeffs_ptr[11] * (double)broken;
+	b11 = (double)coeffs_ptr[12] * (double)browsing;
+
+
+	/* this is a species level variable */
+	power_term = ( max_temp - opt_temp ) / ( opt_temp - min_temp );
+
+	/* loop over the months to compute the solar radiation temperature modifier. */
+	for( i = 0; i < 12; i++ )
+	    {
+
+		/* tday_c is a vector */
+		t1num = tday_c[i] - min_temp;
+		if( t1num < 0.0 )
+		    {
+			    t1num = 0.0;
+		    }
+
+		// t2numdf=tmaxdf - tday_c;  if t2numdf<0 then t2numdf=0;
+		t2num = max_temp - tday_c[i];
+		if( t2num < 0.0 )
+		    {
+			    t2num = 0.0;
+		    }
+
+		/* this is a vector??? */
+		    tmod[i] = pow( ( t1num / ( opt_temp - min_temp ) ) * ( t2num / ( max_temp - opt_temp ) ), power_term );
+
+		    SRT += srad[i] * tmod[i] / 1000.0;
+
+	    }
+
+	/* gspcp ?= growing_season_precip ?= precip				*/
+	/* input is in inches/year, model version in mm/year	*/	
+	gspcp = precip; 
+
+	hcb1 = total_height * ( 1.0 - crown_ratio );	/* units */
+
+	/* compute the height growth, in feet. */
+	/* this test returns 437.827, which is probably incorrect.		*/
+	/* this test returns 1.3260284159948714, which is more like it	*/
+    /* changed the crown area to unitless 9/2011 & updated function mwr*/
+	temp_growth = exp(a0
+			        + a1 * whc
+			        + a2 * log(total_height)
+			        + a3 * ( pow( total_height, a10 ) ) * 0.1
+			        + a4 * log( crown_ratio )
+			        + a5 * (catcon/SQ_FT_PER_ACRE) * (catcon/SQ_FT_PER_ACRE)
+			        + a6 * ( cahw/SQ_FT_PER_ACRE )*  (cahw/SQ_FT_PER_ACRE)
+                    + a7 * ( cash/SQ_FT_PER_ACRE )*( cash/SQ_FT_PER_ACRE )
+			        + a8 * log(gspcp)
+			        + a9 * ( SRT ) );
+
 
         if( (temp_growth) <= 0.0 )
         {
@@ -1624,20 +2651,19 @@ void calc_height_growth(
 	        *height_growth  = temp_growth + (b10 + b11);          /* damage adjustments                    */
         }
     }
-/******************** this concludes the tree height growth model  ******************************************/
     else if(plant_type == SHRUB )        
     {
-		b0  = coeffs_ptr[0];
-		b1  = coeffs_ptr[1];
-		b2  = coeffs_ptr[2];
-		b3  = coeffs_ptr[3];
-		b4  = coeffs_ptr[4];
+		a0  = coeffs_ptr[0];
+		a1  = coeffs_ptr[1];
+		a2  = coeffs_ptr[2];
+		a3  = coeffs_ptr[3];
+		a4  = coeffs_ptr[4];
 
-		*height_growth= b0/total_height 
-                  + exp(b1 + b2*(log(total_height)) + b3*total_height*basal_d + b4*cat*cat);
+		*height_growth= a0/total_height 
+                  + exp(a1 + a2*(log(total_height)) + a3*total_height*basal_d + a4*cat*cat);
 
         /****for unknown brush species set growth to zero *****/
-        if (b1 == 0 && b2 == 0 && b3 == 0 && b4 == 0)
+        if (a1 == 0 && a2 == 0 && a3 == 0 && a4 == 0)
         {
             *height_growth=0.0;
         }
@@ -1646,14 +2672,20 @@ void calc_height_growth(
 	{
 		*height_growth=0.0;
 	}
-/******************* this concludes the shrub height growth model *******************************************/
-/************************************************************************************************************/
-	if( total_height + *height_growth <= 0.5)                       /* if predicted height is <0.5 then        */
+
+	/******************** this concludes the tree height growth model  ******************************************/
+    
+	/* if predicted height is <0.5 then        */
+	if( total_height + *height_growth <= 0.5 )                       
     {
-        *height_growth = (-1.0)*(total_height-0.51 ) ;
+        *height_growth = 0.0 ;
     }
-    return;
+    
+	return;
+
 }
+
+
 
 /********************************************************************************/
 /*                  calc_cr_growth                                              */
@@ -1685,7 +2717,7 @@ void calc_height_growth(
 /*  Source  : Ritchie April 2000                                                */
 /*  Coeffs  : CG                                                                */
 /********************************************************************************/
-void calc_cr_growth(
+void swo_hybrid_calc_cr_growth(
     unsigned long   *return_code,
     int             hcb_growth_on,
     double          total_height,
@@ -1803,6 +2835,7 @@ void calc_cr_growth(
     }
 }
 
+
 /********************************************************************************/
 /*                  calc_cw_growth         D6                                   */
 /********************************************************************************/
@@ -1829,7 +2862,7 @@ void calc_cr_growth(
 /*  Source  : Ritchie 11/99                                                     */
 /*  Coeffs  : CG                                                                */
 /********************************************************************************/
-void calc_cw_growth(   
+void swo_hybrid_calc_cw_growth(   
 	unsigned long   *return_code,
 	double          total_height,
 	double		    height_growth,
@@ -1848,17 +2881,14 @@ void calc_cw_growth(
 	double  c0;
 	double  c1;
 	double  c2;
-	double  c3;
-	double  c4;
-	double  c5;
-	double  c6;
-	double  c7;
-	double  c8;
-	double  c9;
-	double  c10;
-
-/* this function currently does not have a random damage component but that is */
-/*  what the extra parameters (c7, c8) are for and the uniform_0_1 variable    */
+	//double  c3;
+	//double  c4;
+	//double  c5;
+	//double  c6;
+	//double  c7;
+	//double  c8;
+	//double  c9;
+	//double  c10;
 
 	*return_code	= CONIFERS_SUCCESS;
 
@@ -1891,66 +2921,59 @@ void calc_cw_growth(
 
 
     temp_cwg    = 0.0;
-	ca_conifers = (ca_conifers/SQ_FT_PER_ACRE)*(ca_conifers/SQ_FT_PER_ACRE);
-	ca_hardwoods= (ca_hardwoods/SQ_FT_PER_ACRE)*(ca_hardwoods/SQ_FT_PER_ACRE);
-	ca_shrubs   = (ca_shrubs/SQ_FT_PER_ACRE)*(ca_shrubs/SQ_FT_PER_ACRE);
-	catcon      = catcon/SQ_FT_PER_ACRE;
     
+	//c0=   0.836485;
+	//c1=   0.944264;
+	//c2=  -0.15986;
+
 	c0      = coeffs_ptr[0];
 	c1      = coeffs_ptr[1];
 	c2      = coeffs_ptr[2];
-	c3	    = coeffs_ptr[3];
-	c4	    = coeffs_ptr[4];
-	c5	    = coeffs_ptr[5];
-	c6	    = coeffs_ptr[6];
-	c7	    = coeffs_ptr[7];
-	c8	    = coeffs_ptr[8];
-	c9      = coeffs_ptr[9];
-	c10     = coeffs_ptr[10];
 
-/*  for trees,  hw & conifers c8 is an indicator parameter 0 for tree */
-	if(plant_type == CONIFER || plant_type == HARDWOOD)
+	/*  for trees,  hw & conifers c8 is an indicator parameter 0 for tree */
+	if( plant_type == CONIFER || plant_type == HARDWOOD )
 	{
-		temp_cwg = pow(height_growth,c1)
-			      * ( c0 
-				+ c2*sqrt(crown_width) 
-				+ c3*ca_conifers 
-				+ c4*ca_hardwoods 
-				+ c5*ca_shrubs 
-				+ c6*log(crown_width));
 
+		temp_cwg = ( c0 + c2 * sqrt( crown_width ) ) * pow( height_growth, c1 );
+ 
 		if( temp_cwg < 0.0 ) /* if pred growth is negative */
 		{
 			*pred_cw_growth    = 0.00;  /* Growth will be set to 0 */
 			*return_code        = CONIFERS_SUCCESS;
 			return;
 		}
+
 		*pred_cw_growth     = temp_cwg ;
 		*return_code        = CONIFERS_SUCCESS;
 		return;
 	}
 
-	else if(plant_type == SHRUB)   /* if it is a shrub, change to a different function using c8 c9 c10*/
-	{
-	    temp_cwg = (height_growth*2.0) * c8*pow(total_height, c9) * exp(c10*catcon);
-        if(temp_cwg < 0.0)
-        {
-            *pred_cw_growth =0.0;
-            *return_code    = CONIFERS_SUCCESS;
-            return;
-        }
-	    *pred_cw_growth  = 0.5* temp_cwg;
-	    *return_code     = CONIFERS_SUCCESS;
-	    return;
-	}
-    else
-    {
-        *pred_cw_growth  = 0.0;
-	    *return_code     = CONIFERS_SUCCESS;
-	    return;
-    }
+
+	//if(plant_type == SHRUB)   /* if it is a shrub, change to a different function using c8 c9 c10*/
+	//{
+	//    temp_cwg = (height_growth*2.0) * c8*pow(total_height, c9) * exp(c10*catcon);
+    //    if(temp_cwg < 0.0)
+    //    {
+    //        *pred_cw_growth =0.0;
+    //        *return_code    = CONIFERS_SUCCESS;
+    //        return;
+    //    }
+	//    *pred_cw_growth  = 0.5* temp_cwg;
+	//    *return_code     = CONIFERS_SUCCESS;
+	//    return;
+	//}
+    //else
+   // {
+   //     *pred_cw_growth  = 0.0;
+//	    *return_code     = CONIFERS_SUCCESS;
+//	    return;
+//    }
+
 
 }
+
+
+
 /********************************************************************************/
 /*                  calc_endemic_mortality                                      */
 /********************************************************************************/
@@ -1972,7 +2995,7 @@ void calc_cw_growth(
 /*  Source  : SYSTUM-1                                                          */
 /*  Coeffs  : MO                                                                */
 /********************************************************************************/
-void swo_calc_endemic_mortality(   
+void swo_hybrid_calc_endemic_mortality(   
     unsigned long   *return_code,
     double          expansion_factor,
     double          *pred_mortality,

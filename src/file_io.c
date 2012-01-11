@@ -88,10 +88,10 @@
 /*                                                                          */
 /****************************************************************************/
 
-/* 	$Id: file_io.c 671 2010-10-25 21:45:34Z mritchie $	 */
+/* 	$Id: file_io.c 853 2012-01-24 02:05:20Z hamannj $	 */
 
 /* #ifndef lint */
-/* static char vcid[] = "$Id: file_io.c 671 2010-10-25 21:45:34Z mritchie $"; */
+/* static char vcid[] = "$Id: file_io.c 853 2012-01-24 02:05:20Z hamannj $"; */
 /* #endif /\* lint *\/ */
 
 
@@ -463,12 +463,17 @@ void __stdcall dump_plots_to_file(
         return;
     }
 
+        fprintf( fp, 
+//            "%4ld %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", 
+            "plot, water_capacity, site_30, shrub_pct_cover, shrub_mean_height, basal_area, bh_expf, qmd, sdi, ba_c, ba_h, expf\n" );
+
     plot_ptr = &plots_ptr[0];
     for( i = 0; i < n_points; i++, plot_ptr++ )
     {
         /* MOD004 */
         fprintf( fp, 
-            "%4ld %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf \n", 
+//            "%4ld %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", 
+            "%4ld, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf, %8.2lf\n", 
             plot_ptr->plot,          
             plot_ptr->water_capacity, 
             plot_ptr->site_30,
@@ -480,7 +485,9 @@ void __stdcall dump_plots_to_file(
             plot_ptr->sdi,
             plot_ptr->ba_c,
             plot_ptr->ba_h,
-            plot_ptr->expf);
+            plot_ptr->expf
+
+			);
 
     }
 
@@ -497,6 +504,7 @@ void __stdcall dump_plots_to_file(
 void __stdcall dump_plants_to_file( 
     unsigned long       *return_code,
     const char          *filename,
+//    FILE                *fp,
     unsigned long       n_plants,
     struct PLANT_RECORD *plants_ptr,
     unsigned long       n_species,
@@ -513,11 +521,17 @@ void __stdcall dump_plants_to_file(
         return;
     }
 
+        fprintf( fp, 
+            //"%ld %ld %s %lf %lf %lf %lf %lf %lf %ld %lf %lf %lf %ld %lf %lf %lf %lf %lf %lf %ld\n", 
+            "plot, plant, sp_code, d6, d6_area, dbh, basal_area, tht, cr, n_stems, expf, crown_width, crown_area, user_code, d6_growth, dbh_growth, tht_growth, cr_growth, cw_growth, expf_change, errors\n" );
+
+
     plant_ptr = &plants_ptr[0];
     for( i = 0; i < n_plants; i++, plant_ptr++ )
     {
         fprintf( fp, 
-            "%ld %ld %s %lf %lf %lf %lf %lf %lf %ld %lf %lf %lf %ld %lf %lf %lf %lf %lf %lf %ld\n", 
+            //"%ld %ld %s %lf %lf %lf %lf %lf %lf %ld %lf %lf %lf %ld %lf %lf %lf %lf %lf %lf %ld\n", 
+            "%ld, %ld, %s, %lf, %lf, %lf, %lf, %lf, %lf, %ld, %lf, %lf, %lf, %ld, %lf, %lf, %lf, %lf, %lf, %lf, %ld\n", 
             plant_ptr->plot,            
             plant_ptr->plant,           
 
@@ -548,7 +562,7 @@ void __stdcall dump_plants_to_file(
 
     }
 
-    fclose( fp );
+//    fclose( fp );
     *return_code = CONIFERS_SUCCESS;
 
 }
@@ -631,12 +645,13 @@ void __stdcall write_summaries_to_file(
 
 
 /****************************************************************************/
-/*  6. import_plot_array_from_file                                          */
+/* read_plots_from_file												*/
+/* file mimics the read_plots_from_file function							*/
 /****************************************************************************/
 void read_plots_from_file( 
 	unsigned long			*return_code,
     const char				*filename, 
-    unsigned long			*n_points,
+    unsigned long			*n_plots,
 	struct PLOT_RECORD		**plots_ptr )
 {
 
@@ -651,21 +666,24 @@ void read_plots_from_file(
         return;
     }
 
-    /* blow off the error checking for today.....   */
-    /* but fix it later                             */
-    /* 7 4200.0 45.0 270.0 6.84 36.0            */
+	/* eat the header line */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
 	i = 0;
 	while( fgets( line_buffer, sizeof( line_buffer ), fp ) != NULL )
 	{
 		i++;
 	}
 
-    (*n_points) = i;
+    (*n_plots) = i;
     *plots_ptr = (struct PLOT_RECORD *)calloc( 
-        (*n_points), sizeof( struct PLOT_RECORD ) );
+        (*n_plots), sizeof( struct PLOT_RECORD ) );
 
     rewind( fp );
-    
+
+	/* eat the header line */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
     i = 0;
 	/*  read each product for the rest of the file */
 	while( fgets( line_buffer, sizeof( line_buffer ), fp ) != NULL )
@@ -674,16 +692,53 @@ void read_plots_from_file(
 
         /* MOD004 */
         if( sscanf( line_buffer, 
-		        "%ld %lf %lf %lf %lf %lf %lf %lf %lf", 
-				&plots_ptr[i]->plot,
-				&plots_ptr[i]->latitude,
-				&plots_ptr[i]->longitude,
-				&plots_ptr[i]->elevation,
-				&plots_ptr[i]->slope,
-				&plots_ptr[i]->aspect,
-				&plots_ptr[i]->water_capacity,
-				&plots_ptr[i]->mean_annual_precip,
-				&plots_ptr[i]->site_30 ) < 6 )
+		        "%ld %lf %lf %lf %lf %lf %lf %lf %lf %lf"
+				"%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
+				"%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf ",
+
+				&(*plots_ptr)[i].plot,
+				&(*plots_ptr)[i].latitude,
+				&(*plots_ptr)[i].longitude,
+				&(*plots_ptr)[i].elevation,
+				&(*plots_ptr)[i].slope,
+				&(*plots_ptr)[i].aspect,
+				&(*plots_ptr)[i].water_capacity,
+				&(*plots_ptr)[i].mean_annual_precip,
+				&(*plots_ptr)[i].site_30,
+				
+				/* added for swohybrid */
+				&(*plots_ptr)[i].growing_season_precip, 
+
+				/* monthly average temperatures */
+				&(*plots_ptr)[i].mean_monthly_temp[0],
+				&(*plots_ptr)[i].mean_monthly_temp[1],
+				&(*plots_ptr)[i].mean_monthly_temp[2],
+				&(*plots_ptr)[i].mean_monthly_temp[3],
+				&(*plots_ptr)[i].mean_monthly_temp[4],
+				&(*plots_ptr)[i].mean_monthly_temp[5],
+				&(*plots_ptr)[i].mean_monthly_temp[6],
+				&(*plots_ptr)[i].mean_monthly_temp[7],
+				&(*plots_ptr)[i].mean_monthly_temp[8],
+				&(*plots_ptr)[i].mean_monthly_temp[9],
+				&(*plots_ptr)[i].mean_monthly_temp[10],
+				&(*plots_ptr)[i].mean_monthly_temp[11],
+
+				/* solar radiation */
+				&(*plots_ptr)[i].solar_radiation[0],
+				&(*plots_ptr)[i].solar_radiation[1],
+				&(*plots_ptr)[i].solar_radiation[2],
+				&(*plots_ptr)[i].solar_radiation[3],
+				&(*plots_ptr)[i].solar_radiation[4],
+				&(*plots_ptr)[i].solar_radiation[5],
+				&(*plots_ptr)[i].solar_radiation[6],
+				&(*plots_ptr)[i].solar_radiation[7],
+				&(*plots_ptr)[i].solar_radiation[8],
+				&(*plots_ptr)[i].solar_radiation[9],
+				&(*plots_ptr)[i].solar_radiation[10],
+				&(*plots_ptr)[i].solar_radiation[11]
+				
+				) < 9 )
+				//&(*plots_ptr)[i].site_30 ) < 7 )
         {
             continue;/* error trap here */
         }
@@ -694,8 +749,6 @@ void read_plots_from_file(
     fclose( fp );
     *return_code = CONIFERS_SUCCESS;
 
-	//return plot_ptr;
-
 }
 
 
@@ -703,6 +756,8 @@ void read_plots_from_file(
 /*  7. write_plot_file                                                      */
 /****************************************************************************/
 /* MODXXX */
+/* this function is deprecated since it's assumed the user will be using	*/
+/* the rconifers library from R												*/
 void __stdcall write_plots_to_text_file( 
     unsigned long       *return_code,
     const char          *filename, 
@@ -2624,13 +2679,15 @@ static unsigned long get_org_sp_group(
 
 
 
+/* This function was updated to match the current files that are used in the R package */
 struct SPECIES_RECORD *read_species_file(
     unsigned long   *return_code,
     const char      *filename, 
     unsigned long   *n_records )
 {
     
-    #define FIELDS 13 /* MOD003 */
+    #define FIELDS 16 /* MOD003 */
+    //#define FIELDS 9 /* MOD003 */
 
     FILE                    *fp;
     char                    line_buffer[512];
@@ -2660,6 +2717,9 @@ struct SPECIES_RECORD *read_species_file(
     }
 
 	i = 0;
+
+	/* eat the first (header) line */
+    fgets( line_buffer, sizeof( line_buffer ), fp );
 
     /* count the full lines in the file....                 */
     /* read each product for the rest of the file           */
@@ -2702,7 +2762,10 @@ struct SPECIES_RECORD *read_species_file(
     
     /* go to the beginning of the file */
     rewind( fp );
-    
+  	
+	/* eat the first (header) line */
+    fgets( line_buffer, sizeof( line_buffer ), fp );
+
     /* read each product for the rest of the file */
     i = 0;
     while( fgets( line_buffer, sizeof( line_buffer ), fp ) != NULL )
@@ -2726,9 +2789,6 @@ struct SPECIES_RECORD *read_species_file(
 	        }	   
         }
 
-        //0,"DF",1,"Douglas fir",202,4,"DF"
-        //1,"GF",7,"Grand fir",17,10,"WF"
-
         species_ptr[i].idx			= atoi( temp_string[0] );
         strcpy( species_ptr[i].sp_code, temp_string[1] );
         species_ptr[i].fsp_idx			= atoi( temp_string[2] );
@@ -2742,6 +2802,13 @@ struct SPECIES_RECORD *read_species_file(
         species_ptr[i].mechanical_damage	= atof( temp_string[10] );
         species_ptr[i].genetic_worth_h		= atof( temp_string[11] );
         species_ptr[i].genetic_worth_d      = atof( temp_string[12] );
+
+		/* added for the swohybrid variant CONIFERS_SWOHYBRID */
+		/* climate model coeffs */
+        species_ptr[i].min_temp				= atof( temp_string[13] );
+        species_ptr[i].max_temp				= atof( temp_string[14] );
+        species_ptr[i].opt_temp				= atof( temp_string[15] );
+
 
        i++;
     }
@@ -2783,7 +2850,7 @@ void write_species_file(
     for( i = 0; i < n_records; i++, s++ )
     {
         fprintf(    fp, 
-                    "%ld,\"%s\",%ld,\"%s\",%ld,%ld,\"%s\",%lf,%lf,%lf,%lf,%lf,%lf\n",
+                    "%ld,\"%s\",%ld,\"%s\",%ld,%ld,\"%s\",%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",
                     s->idx,
                     s->sp_code,
                     s->fsp_idx,
@@ -2796,13 +2863,346 @@ void write_species_file(
 			        s->browse_damage,
 			        s->mechanical_damage,
 			        s->genetic_worth_h,
-                    s->genetic_worth_d);
+                    s->genetic_worth_d,
+
+					/* added for the swohybrid variant CONIFERS_SWOHYBRID */
+					s->min_temp,
+					s->max_temp,
+					s->opt_temp 
+
+					);
 
     }
 
     fclose( fp );
     *return_code = CONIFERS_SUCCESS;
 }
+
+
+
+
+
+
+
+/****************************************************************************/
+/* read_plots_from_file												*/
+/* file mimics the read_plots_from_file function							*/
+/****************************************************************************/
+void read_plants_from_file( 
+	unsigned long			*return_code,
+    const char				*filename, 
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+    unsigned long			*n_plants,
+	struct PLANT_RECORD		**plants_ptr )
+{
+
+    char    line_buffer[256];
+	unsigned long    i;
+	FILE	*fp;
+	struct PLANT_RECORD		*plant_ptr = NULL;
+    int                     n_args;
+    char                    temp_sp_code[16];
+    struct SPECIES_RECORD   *s_ptr;
+
+
+    if( ( fp = fopen( filename, "rt" ) ) == NULL )
+    {
+        *return_code = INVALID_OPTION;
+        return;
+    }
+
+
+    /* sort the species codes based on sp_code */
+    qsort(  (void*)species_ptr, 
+            (size_t)(n_species), 
+            sizeof( struct SPECIES_RECORD ),
+	        compare_species_by_sp_code );
+
+	/* eat the header line */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
+	i = 0;
+	while( fgets( line_buffer, sizeof( line_buffer ), fp ) != NULL )
+	{
+		i++;
+	}
+
+    (*n_plants) = i;
+    *plants_ptr = (struct PLANT_RECORD *)calloc( 
+        (*n_plants), sizeof( struct PLANT_RECORD ) );
+
+	/* rewind the file pointer to the beginning of the file */
+    rewind( fp );
+
+	/* eat the header line */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
+    plant_ptr = &(*plants_ptr)[0];
+    for( i = 0; i < (*n_plants); i++, plant_ptr++ )
+    {
+
+      n_args = 0;
+      memset( line_buffer, 0, sizeof( line_buffer ) );
+      memset( temp_sp_code, 0, sizeof( temp_sp_code ) );
+
+	    fgets( line_buffer, sizeof( line_buffer ), fp );
+        
+/*
+plot sp.code d6 dbh tht cr n.stems expf crown.width
+1 DF 1.9 0.2 5.2 0.89 1 100 4.5
+
+*/
+
+
+        n_args = sscanf( line_buffer, 
+            //"%ld %ld %s %lf %lf %lf %lf %lf %lf %ld %lf %lf %lf %ld", 
+            "%ld %s %lf %lf %lf %lf %ld %lf %lf", 
+            &plant_ptr->plot,           
+            //&plant_ptr->plant,          
+            temp_sp_code,
+            &plant_ptr->d6,             
+            //&plant_ptr->d6_area,        
+            &plant_ptr->dbh,            
+            //&plant_ptr->basal_area,     
+            &plant_ptr->tht,            
+            &plant_ptr->cr,			    
+            &plant_ptr->n_stems,        
+            &plant_ptr->expf,           
+            &plant_ptr->crown_width );
+            //&plant_ptr->crown_area,     
+            //&plant_ptr->user_code  );
+
+        /* assign a plant id for accounting */
+        /* not required */
+        plant_ptr->plant = i;
+
+        /* convert the temporary species code to the internal functional species code */
+        //tree_ptr[i].sp_idx = get_sp_idx( temp_sp_code );
+        s_ptr = NULL;
+        s_ptr = get_species_entry_from_code(    n_species,
+                                                species_ptr, 
+                                                temp_sp_code );
+
+
+        /* if the species is invalid for the current species list */
+        /* clean up the sample and return null, setting the       */
+        /* rc to invalid file                                     */
+        if( !s_ptr || n_args < 9 )
+        {
+
+            *return_code = CONIFERS_ERROR;
+
+			if( *plants_ptr )
+			{
+				free( *plants_ptr );
+                *plants_ptr = NULL;
+			}
+
+            fclose( fp );
+			return;
+
+        }
+
+        plant_ptr->sp_idx = s_ptr->idx;
+
+    }
+
+
+    fclose( fp );
+    *return_code = CONIFERS_SUCCESS;
+
+    /* then resort the species codes based on idx */
+    qsort(  (void*)species_ptr, 
+            (size_t)(n_species), 
+            sizeof( struct SPECIES_RECORD ),
+	        compare_species_by_idx );
+
+
+
+}
+
+
+
+
+
+/****************************************************************************/
+/* read_inp_file												            */
+/* file mimics the read_plots_from_file function							*/
+/****************************************************************************/
+void read_inp_file( 
+	unsigned long			*return_code,
+    const char				*filename, 
+    unsigned long           n_species,
+    struct SPECIES_RECORD   *species_ptr,
+    unsigned long			*n_plants,
+	struct PLANT_RECORD		**plants_ptr )
+{
+
+    char    line_buffer[256];
+	unsigned long    i;
+	FILE	*fp;
+	struct PLANT_RECORD		*plant_ptr = NULL;
+    int                     n_args;
+    char                    temp_sp_code[16];
+    struct SPECIES_RECORD   *s_ptr;
+
+
+    if( ( fp = fopen( filename, "rt" ) ) == NULL )
+    {
+        *return_code = INVALID_OPTION;
+        return;
+    }
+
+
+    /* sort the species codes based on sp_code */
+    qsort(  (void*)species_ptr, 
+            (size_t)(n_species), 
+            sizeof( struct SPECIES_RECORD ),
+	        compare_species_by_sp_code );
+
+    /* eat the four header line for now */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
+    /* count the number of tree records in the file */
+	i = 0;
+	while( fgets( line_buffer, sizeof( line_buffer ), fp ) != NULL )
+	{
+		i++;
+	}
+
+    (*n_plants) = i;
+    *plants_ptr = (struct PLANT_RECORD *)calloc( 
+        (*n_plants), sizeof( struct PLANT_RECORD ) );
+
+	/* rewind the file pointer to the beginning of the file */
+    rewind( fp );
+
+	/* eat the header line */
+    /* eat the four header line for now */
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+	fgets( line_buffer, sizeof( line_buffer ), fp );
+
+
+    plant_ptr = &(*plants_ptr)[0];
+    for( i = 0; i < (*n_plants); i++, plant_ptr++ )
+    {
+
+      n_args = 0;
+      memset( line_buffer, 0, sizeof( line_buffer ) );
+      memset( temp_sp_code, 0, sizeof( temp_sp_code ) );
+
+	  fgets( line_buffer, sizeof( line_buffer ), fp );
+
+        /* parse out the fields */
+        /* another day of reinventing the wheel... */
+
+        
+
+/*
+plot sp.code d6 dbh tht cr n.stems expf crown.width
+1 DF 1.9 0.2 5.2 0.89 1 100 4.5
+
+*/
+
+
+        n_args = sscanf( line_buffer, 
+            //"%ld %ld %s %lf %lf %lf %lf %lf %lf %ld %lf %lf %lf %ld", 
+            "%ld %s %lf %lf %lf %lf %ld %lf %lf", 
+            &plant_ptr->plot,           
+            //&plant_ptr->plant,          
+            temp_sp_code,
+            &plant_ptr->d6,             
+            //&plant_ptr->d6_area,        
+            &plant_ptr->dbh,            
+            //&plant_ptr->basal_area,     
+            &plant_ptr->tht,            
+            &plant_ptr->cr,			    
+            &plant_ptr->n_stems,        
+            &plant_ptr->expf,           
+            &plant_ptr->crown_width );
+            //&plant_ptr->crown_area,     
+            //&plant_ptr->user_code  );
+
+        /* convert the temporary species code to the internal functional species code */
+        //tree_ptr[i].sp_idx = get_sp_idx( temp_sp_code );
+        s_ptr = NULL;
+        s_ptr = get_species_entry_from_code(    n_species,
+                                                species_ptr, 
+                                                temp_sp_code );
+
+
+        /* if the species is invalid for the current species list */
+        /* clean up the sample and return null, setting the       */
+        /* rc to invalid file                                     */
+        if( !s_ptr || n_args < 9 )
+        {
+
+            *return_code = CONIFERS_ERROR;
+
+			if( *plants_ptr )
+			{
+				free( *plants_ptr );
+                *plants_ptr = NULL;
+			}
+
+            fclose( fp );
+			return;
+
+        }
+
+        plant_ptr->sp_idx = s_ptr->idx;
+
+    }
+
+
+    fclose( fp );
+    *return_code = CONIFERS_SUCCESS;
+
+    /* then resort the species codes based on idx */
+    qsort(  (void*)species_ptr, 
+            (size_t)(n_species), 
+            sizeof( struct SPECIES_RECORD ),
+	        compare_species_by_idx );
+
+
+
+}
+
+
+
+
+
+/* this function prints the plant list variables and the associated errors  */
+/* it needs to be updated.                                                  */
+/* todo: update the function so that it can be more informative             */
+//void print_errors_and_warnings(
+//    unsigned long           n_plants,
+//    struct PLANT_RECORD     *plants_ptr )
+//{
+//
+//
+//    unsigned long           i;
+//    struct PLANT_RECORD     *p;
+//
+//    p = &plants_ptr[0];
+//    for( i = 0; i < n_plants; i++, p++ )
+//    {
+//        fprintf(    stdout, 
+//                    "plant %ld contains %ld errors\n",
+//                    i,
+//                    p->errors );
+//
+//    }
+//   
+//}
 
 
 
